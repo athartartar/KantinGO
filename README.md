@@ -53,6 +53,49 @@ KantinGO adalah aplikasi web pick-up makanan dari kantin mitra. Dirancang dengan
      pnpm dev:backend
      ```
 
+## Ringkasan Endpoint Backend API (`/api`)
+
+| Method | Endpoint | Autentikasi | Deskripsi |
+|---|---|---|---|
+| `GET` | `/api/health` | Publik | Cek kesehatan server |
+| `POST` | `/api/auth/register` | Publik | Pendaftaran akun pengguna baru |
+| `POST` | `/api/auth/login` | Publik | Masuk akun dan perolehan JWT |
+| `GET` | `/api/me` | Bearer Token | Profil akun pengguna saat ini |
+| `PATCH` | `/api/me` | Bearer Token | Perbarui profil akun |
+| `PATCH` | `/api/me/password` | Bearer Token | Perbarui kata sandi akun |
+| `GET` | `/api/categories` | Publik | Daftar kategori makanan dan minuman |
+| `GET` | `/api/stalls` | Publik | Daftar warung kantin (filter kategori & paginasi) |
+| `GET` | `/api/stalls/:id` | Publik | Detail warung, menu per kategori, dan rating |
+| `GET` | `/api/stalls/:id/pickup-slots` | Publik | Pilihan waktu penjemputan interval 15 menit |
+| `GET` | `/api/stalls/:id/reviews` | Publik | Daftar ulasan warung terpaginasi |
+| `GET` | `/api/menus` | Publik | Daftar seluruh menu tersedia |
+| `GET` | `/api/menus/popular` | Publik | Menu terpopuler berdasarkan pesanan |
+| `GET` | `/api/menus/:id` | Publik | Detail menu beserta pilihan add-on |
+| `GET` | `/api/search` | Publik | Pencarian menu dan warung (ILIKE) |
+| `GET` | `/api/home` | Bearer Token | Data beranda (greeting, poin, notifikasi, warung) |
+| `GET` | `/api/cart` | Bearer Token | Keranjang belanja lengkap dengan add-on & subtotal |
+| `POST` | `/api/cart/items` | Bearer Token | Tambah menu ke keranjang (satu warung per cart) |
+| `PATCH` | `/api/cart/items/:id` | Bearer Token | Perbarui kuantitas/catatan/add-on item keranjang |
+| `DELETE` | `/api/cart/items/:id` | Bearer Token | Hapus item keranjang (reset warung jika kosong) |
+| `DELETE` | `/api/cart` | Bearer Token | Kosongkan seluruh keranjang belanja |
+| `GET` | `/api/vouchers/summary` | Bearer Token | Ringkasan voucher, poin, dan progres reward |
+| `GET` | `/api/vouchers/me` | Bearer Token | Daftar voucher user (`available`, `used`, `expired`) |
+| `POST` | `/api/vouchers/redeem` | Bearer Token | Klaim voucher menggunakan kode promo |
+| `GET` | `/api/points/history` | Bearer Token | Riwayat perolehan poin transaksi |
+| `POST` | `/api/checkout` | Bearer Token | Checkout pesanan (snapshot item, payment QRIS) |
+| `GET` | `/api/payments/:id` | Bearer Token | Detail pembayaran (pengecekan kedaluwarsa lazy) |
+| `POST` | `/api/payments/:id/simulate-paid` | Bearer Token | Simulasi bayar QRIS (khusus non-produksi) |
+| `POST` | `/api/payments/webhook` | Publik | Webhook callback pembayaran |
+| `GET` | `/api/orders` | Bearer Token | Riwayat pesanan pengguna (filter status) |
+| `GET` | `/api/orders/active-receipt` | Bearer Token | Struk pesanan aktif terbaru (`processing`/`ready`) |
+| `GET` | `/api/orders/:id` | Bearer Token | Detail struk pesanan lengkap |
+| `POST` | `/api/orders/:id/complete` | Bearer Token | Selesaikan pesanan (`ready` -> `completed` + poin) |
+| `POST` | `/api/orders/:id/review` | Bearer Token | Beri ulasan dan rating pesanan selesai |
+| `PATCH` | `/api/admin/orders/:id/status` | `x-admin-key` | Admin update status pesanan (`processing` -> `ready`) |
+| `GET` | `/api/notifications` | Bearer Token | Daftar notifikasi pengguna |
+| `PATCH` | `/api/notifications/:id/read` | Bearer Token | Tandai satu notifikasi telah dibaca |
+| `PATCH` | `/api/notifications/read-all` | Bearer Token | Tandai semua notifikasi telah dibaca |
+
 ## Struktur Folder
 
 ```text

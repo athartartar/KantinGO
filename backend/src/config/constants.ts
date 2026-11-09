@@ -9,3 +9,7 @@ export const DEFAULT_PAYMENT_METHOD = "qris";
 export const MIN_RATING = 1;
 export const MAX_RATING = 5;
 export const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+export const DEFAULT_SEARCH_LIMIT = 10;
+export const HOME_POPULAR_MENUS_LIMIT = 10;
+export const HOME_STALLS_LIMIT = 5;
+export const VOUCHER_POPULAR_MENUS_LIMIT = 5;

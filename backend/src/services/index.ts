@@ -1,2 +1,15 @@
 export * as authService from "./auth.service";
 export * as userService from "./user.service";
+export * as categoryService from "./category.service";
+export * as stallService from "./stall.service";
+export * as menuService from "./menu.service";
+export * as searchService from "./search.service";
+export * as homeService from "./home.service";
+export * as cartService from "./cart.service";
+export * as voucherService from "./voucher.service";
+export * as pointService from "./point.service";
+export * as checkoutService from "./checkout.service";
+export * as paymentService from "./payment.service";
+export * as orderService from "./order.service";
+export * as reviewService from "./review.service";
+export * as notificationService from "./notification.service";
