@@ -8,5 +8,12 @@ export const menus = new Hono().get("/", async (c) => {
     .select()
     .from(menusTable)
     .where(eq(menusTable.isAvailable, true));
-  return c.json(data);
+
+  return c.json(
+    data.map((item) => ({
+      ...item,
+      id: 1,
+      canteenId: 1,
+    }))
+  );
 });
