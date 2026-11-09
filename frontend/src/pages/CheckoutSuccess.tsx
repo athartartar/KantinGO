@@ -3,19 +3,19 @@ import {
   Clock,
   Home,
   Receipt,
-  ShoppingBag,
   Store,
   Tag,
-  UtensilsCrossed,
 } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "../lib/cart";
+import { useOrders } from "../lib/orders";
 import { formatRupiah } from "../lib/format";
 
 export default function CheckoutSuccess() {
   const location = useLocation();
   const { clearCart } = useCart();
+  const { addOrder } = useOrders();
   const orderState = location.state;
 
   // Generate atau gunakan orderId yang diteruskan
@@ -24,51 +24,80 @@ export default function CheckoutSuccess() {
   }, [orderState?.orderId]);
 
   const warungNama = orderState?.warungNama || "Kantin Bu Siti";
+  const warungId = orderState?.warungId || "1";
   const pickupTime = orderState?.pickupTime || "Secepatnya (±10 mnt)";
   const total = orderState?.total || 18000;
+  const subtotal = orderState?.subtotal || total;
+  const diskon = orderState?.discountAmount || 0;
+  const biayaLayanan = orderState?.serviceFee ?? 1000;
   const voucher = orderState?.voucher || null;
   const items = orderState?.items || [];
 
   const hasSavedRef = useRef(false);
 
-  // Bersihkan cart dan simpan ke localStorage pada mount
+  // Bersihkan cart dan simpan ke store orders pada mount
   useEffect(() => {
     // 1. Kosongkan keranjang belanja
     clearCart();
 
-    // 2. Simpan order ke localStorage dengan status "diproses"
+    // 2. Simpan order ke order store dengan status awal "diproses"
     if (!hasSavedRef.current) {
       hasSavedRef.current = true;
       try {
-        const rawExisting = localStorage.getItem("kantingo_orders");
-        const existingOrders = rawExisting ? JSON.parse(rawExisting) : [];
-        const newOrder = {
-          id: orderId,
-          warungNama,
-          pickupTime,
-          total,
-          voucher: voucher ? voucher.judul || voucher.kode : null,
-          items: items.map((it: any) => ({
-            id: it.id,
-            nama: it.menu?.nama || `Menu #${it.menuId}`,
-            jumlah: it.jumlah,
-            hargaSatuan: it.hargaSatuan,
-            catatan: it.catatan,
-          })),
-          status: "diproses", // Status awal "diproses"
-          statusLabel: "Sedang Diproses Warung",
-          createdAt: new Date().toISOString(),
-        };
+        const orderItems = items.map((it: any) => ({
+          menuId: it.menuId || it.id || "1",
+          warungId: it.warungId || warungId,
+          nama: it.menu?.nama || it.nama || `Menu #${it.menuId || it.id}`,
+          gambar:
+            it.menu?.gambar ||
+            it.menu?.imageUrl ||
+            it.gambar ||
+            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
+          jumlah: it.jumlah || 1,
+          hargaSatuan: it.hargaSatuan || 0,
+          catatan: it.catatan || "",
+          addOns: it.addOns || [],
+        }));
 
-        if (!existingOrders.some((o: any) => o.id === orderId)) {
-          const updatedOrders = [newOrder, ...existingOrders];
-          localStorage.setItem("kantingo_orders", JSON.stringify(updatedOrders));
-        }
-      } catch {
-        // Abaikan jika localStorage diblokir
+        addOrder({
+          id: orderId,
+          kodePesanan: orderId,
+          warungId,
+          warungNama,
+          items: orderItems,
+          waktuPengambilan: pickupTime,
+          voucher: voucher
+            ? {
+                id: voucher.id,
+                kode: voucher.kode,
+                judul: voucher.judul,
+                nilai: voucher.nilai,
+                tipe: voucher.tipe,
+              }
+            : null,
+          subtotal,
+          diskon,
+          biayaLayanan,
+          total,
+        });
+      } catch (err) {
+        console.error("Gagal menyimpan order ke OrderStore:", err);
       }
     }
-  }, [clearCart, orderId, warungNama, pickupTime, total, voucher, items]);
+  }, [
+    clearCart,
+    addOrder,
+    orderId,
+    warungId,
+    warungNama,
+    pickupTime,
+    total,
+    subtotal,
+    diskon,
+    biayaLayanan,
+    voucher,
+    items,
+  ]);
 
   return (
     <div className="min-h-dvh bg-surface flex items-center justify-center p-4 md:p-6 lg:p-8">
@@ -155,10 +184,10 @@ export default function CheckoutSuccess() {
                     className="flex justify-between text-xs text-navy/80"
                   >
                     <span className="truncate max-w-[240px]">
-                      {it.jumlah}x {it.menu?.nama || `Menu #${it.menuId}`}
+                      {it.jumlah}x {it.menu?.nama || it.nama || `Menu #${it.menuId}`}
                     </span>
                     <span className="font-semibold text-navy">
-                      {formatRupiah(it.hargaSatuan * it.jumlah)}
+                      {formatRupiah((it.hargaSatuan || 0) * (it.jumlah || 1))}
                     </span>
                   </div>
                 ))}

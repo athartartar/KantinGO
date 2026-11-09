@@ -39,6 +39,7 @@ export interface Warung {
   id: string | number;
   nama?: string;
   rating: number;
+  ratingRataRata?: number;
   jumlahUlasan?: number;
   jamBuka?: string;
   logo?: string;
@@ -97,4 +98,59 @@ export interface Voucher {
   minSpend?: number;
   validUntil?: string;
   status?: "active" | "used" | "expired";
+}
+
+// ----------------------------------------------------
+// Review & Order Model
+// ----------------------------------------------------
+export interface Review {
+  id: string;
+  warungId: string;
+  namaUser: string;
+  rating: number;
+  komentar: string;
+  tanggal: string;
+  avatarUrl?: string;
+}
+
+export interface OrderItem {
+  id?: string;
+  menuId: string;
+  nama: string;
+  gambar: string;
+  jumlah: number;
+  hargaSatuan: number;
+  addOns: CartAddOn[];
+  catatan?: string;
+
+  // Kompatibilitas
+  warungId?: string;
+  menu?: Menu;
+  quantity?: number;
+}
+
+export type OrderStatus = "diproses" | "siap" | "selesai";
+
+export interface OrderReview {
+  rating: number;
+  komentar: string;
+  dibuatPada: string;
+}
+
+export interface Order {
+  id: string;
+  kodePesanan: string;
+  warungId: string;
+  warungNama: string;
+  items: OrderItem[];
+  waktuPengambilan: string;
+  voucher?: Voucher | { kode: string; judul: string; nilai: number } | null;
+  subtotal: number;
+  diskon: number;
+  biayaLayanan: number;
+  total: number;
+  dibuatPada: string;
+  status: OrderStatus;
+  sudahDiulas: boolean;
+  ulasan?: OrderReview;
 }

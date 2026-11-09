@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "./lib/cart";
 import { VoucherProvider } from "./context/VoucherContext";
+import { OrderProvider } from "./lib/orders";
 import AppLayout from "./components/AppLayout";
 import Home from "./pages/Home";
 import Voucher from "./pages/Voucher";
@@ -21,6 +22,7 @@ import PaymentQris from "./pages/PaymentQris";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Receipt from "./pages/Receipt";
 import Review from "./pages/Review";
+import WarungProfile from "./pages/WarungProfile";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -29,40 +31,46 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <CartProvider>
-        <VoucherProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Rute dalam AppLayout (dengan TopNav desktop dan BottomNav mobile) */}
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/voucher" element={<Voucher />} />
-                <Route path="/voucher/saya" element={<VoucherSaya />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/status" element={<Status />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/menus" element={<Search />} />
-                <Route path="/warung" element={<Warung />} />
-                <Route path="/warung/:id" element={<CanteenDetail />} />
-                <Route path="/warung/:warungId" element={<CanteenDetail />} />
-                <Route path="/canteens" element={<Warung />} />
-                <Route path="/canteens/:id" element={<CanteenDetail />} />
-              </Route>
+        <OrderProvider>
+          <VoucherProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Rute dalam AppLayout (dengan TopNav desktop dan BottomNav mobile) */}
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/voucher" element={<Voucher />} />
+                  <Route path="/voucher/saya" element={<VoucherSaya />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/status" element={<Status />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/menus" element={<Search />} />
+                  <Route path="/warung" element={<Warung />} />
+                  <Route path="/warung/:id" element={<CanteenDetail />} />
+                  <Route path="/warung/:warungId" element={<CanteenDetail />} />
+                  <Route path="/canteens" element={<Warung />} />
+                  <Route path="/canteens/:id" element={<CanteenDetail />} />
+                </Route>
 
-              {/* Rute Standalone / Transaksional */}
-              <Route
-                path="/warung/:warungId/menu/:menuId"
-                element={<MenuDetail />}
-              />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/payment/qris" element={<PaymentQris />} />
-              <Route path="/checkout/success" element={<CheckoutSuccess />} />
-              <Route path="/status/:orderId" element={<Receipt />} />
-              <Route path="/review/:orderId" element={<Review />} />
-            </Routes>
-          </BrowserRouter>
-        </VoucherProvider>
+                {/* Rute Standalone / Transaksional */}
+                <Route
+                  path="/warung/:warungId/menu/:menuId"
+                  element={<MenuDetail />}
+                />
+                <Route
+                  path="/warung/:warungId/profil"
+                  element={<WarungProfile />}
+                />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/payment/qris" element={<PaymentQris />} />
+                <Route path="/checkout/success" element={<CheckoutSuccess />} />
+                <Route path="/status/:orderId" element={<Receipt />} />
+                <Route path="/review/:orderId" element={<Review />} />
+              </Routes>
+            </BrowserRouter>
+          </VoucherProvider>
+        </OrderProvider>
       </CartProvider>
     </QueryClientProvider>
   </StrictMode>

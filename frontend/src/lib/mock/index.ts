@@ -2,6 +2,7 @@ export * from "./types";
 export * from "./warung";
 export * from "./menu";
 export * from "./voucher";
+export * from "./reviews";
 
 // Mock data compatibility exports
 export { mockWarungList as mockWarung } from "./warung";
