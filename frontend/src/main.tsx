@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "./lib/cart";
 import { VoucherProvider } from "./context/VoucherContext";
+import { OrderProvider } from "./lib/orders";
 import { isAuthenticated } from "./lib/auth";
 import AppLayout from "./components/AppLayout";
 import AppSplashWrapper from "./components/AppSplashWrapper";
@@ -21,12 +22,12 @@ import Search from "./pages/Search";
 import Warung from "./pages/Warung";
 import CanteenDetail from "./pages/CanteenDetail";
 import MenuDetail from "./pages/MenuDetail";
+import WarungProfile from "./pages/WarungProfile";
 import Checkout from "./pages/Checkout";
 import PaymentQris from "./pages/PaymentQris";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Receipt from "./pages/Receipt";
 import Review from "./pages/Review";
-import WarungProfile from "./pages/WarungProfile";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -35,85 +36,66 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <CartProvider>
-        <VoucherProvider>
-          <BrowserRouter>
-            <AppSplashWrapper>
-              <Routes>
-                {/* Halaman autentikasi (tanpa AppLayout) */}
-                <Route path="/splash" element={<SplashScreen />} />
-                <Route path="/login" element={<Login />} />
-
-                {/* Halaman aplikasi yang memerlukan login */}
-                <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/voucher" element={<Voucher />} />
-                  <Route path="/voucher/saya" element={<VoucherSaya />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/status" element={<Status />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/menus" element={<Search />} />
-                  <Route path="/warung" element={<Warung />} />
-                  <Route path="/warung/:id" element={<CanteenDetail />} />
-                  <Route path="/warung/:warungId" element={<CanteenDetail />} />
-                  <Route path="/canteens" element={<Warung />} />
-                  <Route path="/canteens/:id" element={<CanteenDetail />} />
-                </Route>
-
-                {/* Rute standalone / transaksional */}
         <OrderProvider>
           <VoucherProvider>
             <BrowserRouter>
-              <Routes>
-                {/* Rute dalam AppLayout (dengan TopNav desktop dan BottomNav mobile) */}
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/voucher" element={<Voucher />} />
-                  <Route path="/voucher/saya" element={<VoucherSaya />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/status" element={<Status />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/menus" element={<Search />} />
-                  <Route path="/warung" element={<Warung />} />
-                  <Route path="/warung/:id" element={<CanteenDetail />} />
-                  <Route path="/warung/:warungId" element={<CanteenDetail />} />
-                  <Route path="/canteens" element={<Warung />} />
-                  <Route path="/canteens/:id" element={<CanteenDetail />} />
-                </Route>
+              <AppSplashWrapper>
+                <Routes>
+                  {/* Halaman autentikasi (tanpa AppLayout) */}
+                  <Route path="/splash" element={<SplashScreen />} />
+                  <Route path="/login" element={<Login />} />
 
-                {/* Rute Standalone / Transaksional */}
-                <Route
-                  path="/warung/:warungId/menu/:menuId"
-                  element={<MenuDetail />}
-                />
-                <Route
-                  path="/warung/:warungId/profil"
-                  element={<WarungProfile />}
-                />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/payment/qris" element={<PaymentQris />} />
-                <Route path="/checkout/success" element={<CheckoutSuccess />} />
-                <Route path="/status/:orderId" element={<Receipt />} />
-                <Route path="/review/:orderId" element={<Review />} />
+                  {/* Halaman aplikasi yang memerlukan login */}
+                  <Route
+                    element={
+                      <RequireAuth>
+                        <AppLayout />
+                      </RequireAuth>
+                    }
+                  >
+                    <Route path="/" element={<Home />} />
+                    <Route path="/voucher" element={<Voucher />} />
+                    <Route path="/voucher/saya" element={<VoucherSaya />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/status" element={<Status />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/notifications" element={<Notifications />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/menus" element={<Search />} />
+                    <Route path="/warung" element={<Warung />} />
+                    <Route path="/warung/:id" element={<CanteenDetail />} />
+                    <Route path="/warung/:warungId" element={<CanteenDetail />} />
+                    <Route path="/canteens" element={<Warung />} />
+                    <Route path="/canteens/:id" element={<CanteenDetail />} />
+                  </Route>
 
-                {/* Fallback: belum login arahkan ke login, sudah login arahkan ke beranda */}
-                <Route
-                  path="*"
-                  element={
-                    <Navigate
-                      to={isAuthenticated() ? "/" : "/login"}
-                      replace
-                    />
-                  }
-                />
-              </Routes>
-            </AppSplashWrapper>
-          </BrowserRouter>
-        </VoucherProvider>
-              </Routes>
+                  {/* Rute Standalone / Transaksional */}
+                  <Route
+                    path="/warung/:warungId/menu/:menuId"
+                    element={<MenuDetail />}
+                  />
+                  <Route
+                    path="/warung/:warungId/profil"
+                    element={<WarungProfile />}
+                  />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/payment/qris" element={<PaymentQris />} />
+                  <Route path="/checkout/success" element={<CheckoutSuccess />} />
+                  <Route path="/status/:orderId" element={<Receipt />} />
+                  <Route path="/review/:orderId" element={<Review />} />
+
+                  {/* Fallback: belum login arahkan ke login, sudah login arahkan ke beranda */}
+                  <Route
+                    path="*"
+                    element={
+                      <Navigate
+                        to={isAuthenticated() ? "/" : "/login"}
+                        replace
+                      />
+                    }
+                  />
+                </Routes>
+              </AppSplashWrapper>
             </BrowserRouter>
           </VoucherProvider>
         </OrderProvider>
