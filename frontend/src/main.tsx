@@ -10,7 +10,7 @@ import Status from "./pages/Status";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
-import CanteenList from "./pages/CanteenList";
+import Warung from "./pages/Warung";
 import CanteenDetail from "./pages/CanteenDetail";
 import Checkout from "./pages/Checkout";
 import Receipt from "./pages/Receipt";
@@ -32,7 +32,10 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/profile" element={<Profile />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/search" element={<Search />} />
-            <Route path="/canteens" element={<CanteenList />} />
+            <Route path="/menus" element={<Search />} />
+            <Route path="/warung" element={<Warung />} />
+            <Route path="/warung/:id" element={<CanteenDetail />} />
+            <Route path="/canteens" element={<Warung />} />
             <Route path="/canteens/:id" element={<CanteenDetail />} />
           </Route>
           <Route path="/checkout" element={<Checkout />} />
