@@ -1,13 +1,13 @@
-import { Search as SearchIcon, SearchX, Utensils, X } from "lucide-react";
+import { Search as SearchIcon, SearchX, Store, Utensils, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import FloatingCartButton from "../components/FloatingCartButton";
 import MenuCard from "../components/MenuCard";
 import PageHeader from "../components/PageHeader";
 import WarungCard from "../components/WarungCard";
 import { useCart } from "../lib/cart";
 import { mockMenuList } from "../lib/mock/menu";
 import { mockWarungList } from "../lib/mock/warung";
-import FloatingCartButton from "../components/FloatingCartButton";
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -27,7 +27,7 @@ export default function Search() {
   const cleanQuery = query.trim().toLowerCase();
   const isSearching = cleanQuery.length > 0;
 
-  // Filter menu
+  // Filter Menu realtime
   const matchingMenus = useMemo(() => {
     if (!isSearching) return [];
     return mockMenuList.filter(
@@ -39,14 +39,16 @@ export default function Search() {
     );
   }, [cleanQuery, isSearching]);
 
-  // Filter warung
+  // Filter Warung realtime
   const matchingWarungs = useMemo(() => {
     if (!isSearching) return [];
     return mockWarungList.filter(
       (w) =>
-        w.nama.toLowerCase().includes(cleanQuery) ||
+        w.nama?.toLowerCase().includes(cleanQuery) ||
+        w.name?.toLowerCase().includes(cleanQuery) ||
         (w.location && w.location.toLowerCase().includes(cleanQuery)) ||
-        w.kategori.some((k) => k.toLowerCase().includes(cleanQuery))
+        (w.kategori && w.kategori.some((k) => k.toLowerCase().includes(cleanQuery))) ||
+        (w.categories && w.categories.some((k) => k.toLowerCase().includes(cleanQuery)))
     );
   }, [cleanQuery, isSearching]);
 
@@ -56,13 +58,13 @@ export default function Search() {
     <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6">
       <PageHeader title="Pencarian" backTo="/" />
 
-      {/* Input Pencarian */}
+      {/* Input Pencarian Realtime */}
       <div className="relative w-full max-w-2xl mx-auto">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-navy/40">
           <SearchIcon className="w-5 h-5" aria-hidden="true" />
         </div>
         <input
-          type="text"
+          type="search"
           value={query}
           onChange={(e) => handleQueryChange(e.target.value)}
           placeholder="Cari menu favorit atau warung kantin..."
@@ -85,23 +87,24 @@ export default function Search() {
       {isSearching ? (
         hasResults ? (
           <div className="space-y-8 animate-fadeIn">
-            {/* Hasil Menu */}
+            {/* 1. Section Menu */}
             {matchingMenus.length > 0 && (
               <section className="space-y-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pb-2 border-b border-blue-100">
                   <Utensils className="w-5 h-5 text-primary" />
                   <h2 className="text-lg md:text-xl font-bold text-navy">
                     Menu ({matchingMenus.length})
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {matchingMenus.map((menu) => (
                     <MenuCard
                       key={menu.id}
                       menu={menu}
+                      to={`/warung/${menu.warungId}/menu/${menu.id}`}
                       onAdd={(m) => {
-                        const warung = mockWarungList.find((w) => w.id === m.warungId);
+                        const warung = mockWarungList.find((w) => String(w.id) === String(m.warungId));
                         addItem(
                           {
                             menuId: m.id,
@@ -111,7 +114,7 @@ export default function Search() {
                             hargaSatuan: m.harga,
                             menu: m,
                           },
-                          warung?.nama
+                          warung?.nama || warung?.name
                         );
                       }}
                     />
@@ -120,12 +123,15 @@ export default function Search() {
               </section>
             )}
 
-            {/* Hasil Warung */}
+            {/* 2. Section Warung */}
             {matchingWarungs.length > 0 && (
               <section className="space-y-4">
-                <h2 className="text-lg md:text-xl font-bold text-navy">
-                  Warung Kantin ({matchingWarungs.length})
-                </h2>
+                <div className="flex items-center gap-2 pb-2 border-b border-blue-100">
+                  <Store className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg md:text-xl font-bold text-navy">
+                    Warung ({matchingWarungs.length})
+                  </h2>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {matchingWarungs.map((warung) => (
@@ -143,10 +149,10 @@ export default function Search() {
             </div>
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-navy">
-                Tidak ada hasil ditemukan
+                Menu atau warung tidak ditemukan
               </h3>
               <p className="text-sm text-navy/60">
-                Tidak ditemukan menu atau warung yang cocok dengan &quot;{query}&quot;. Coba gunakan kata kunci lain.
+                Tidak ada menu atau warung yang cocok dengan kata kunci &quot;{query}&quot;. Silakan coba kata kunci lain.
               </p>
             </div>
           </div>

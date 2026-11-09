@@ -31,13 +31,16 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
         const res = await api.api.menus.$get();
         if (!res.ok) return mockPopularMenus;
         const raw = await res.json();
-        if (!raw || !("data" in raw) || raw.data.length === 0) return mockPopularMenus;
+        const rawItems = Array.isArray(raw) ? raw : (raw as any)?.data || [];
+        if (!rawItems || rawItems.length === 0) return mockPopularMenus;
 
-        const canteenMap = new Map(mockWarung.map((w) => [w.id, w.name]));
-        return raw.data.map((item, index) => ({
-          id: index + 1,
-          canteenId: 1,
-          canteenName: canteenMap.get(1) || "Kantin #1",
+        const canteenMap = new Map(mockWarung.map((w) => [String(w.id), w.name]));
+        return rawItems.map((item: any) => ({
+          id: item.id,
+          canteenId: item.canteenId ?? item.stallId,
+          canteenName:
+            canteenMap.get(String(item.canteenId ?? item.stallId)) ||
+            `Kantin #${item.canteenId ?? item.stallId}`,
           name: item.name,
           price: item.price,
           description: item.description || "",
@@ -47,7 +50,7 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
               (m) => m.name.toLowerCase() === item.name.toLowerCase()
             )?.imageUrl ||
             "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
-          isAvailable: item.isAvailable,
+          isAvailable: item.isAvailable ?? true,
           rating: 4.8,
           soldCount: item.orderCount || 120,
           categoryId: item.categoryId || "heavy",
@@ -79,7 +82,7 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
           Menu Populer
         </h2>
         <Link
-          to="/search?filter=popular"
+          to="/warung"
           className="inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 text-white hover:text-lime text-xs font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95 cursor-pointer backdrop-blur-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-lime"
           aria-label="Lihat semua menu populer"
         >

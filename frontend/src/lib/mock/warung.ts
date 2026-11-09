@@ -1,11 +1,17 @@
 import type { Warung } from "./types";
+import { calculateWarungStats, initialReviews } from "./reviews";
+
+const stats1 = calculateWarungStats("1", initialReviews);
+const stats2 = calculateWarungStats("2", initialReviews);
+const stats3 = calculateWarungStats("3", initialReviews);
 
 export const mockWarungList: Warung[] = [
   {
     id: "1",
     nama: "Kantin Bu Siti - Masakan Nusantara",
-    rating: 4.8,
-    jumlahUlasan: 320,
+    rating: stats1.ratingRataRata || 4.8,
+    ratingRataRata: stats1.ratingRataRata || 4.8,
+    jumlahUlasan: stats1.jumlahUlasan || 5,
     jamBuka: "08:00 - 17:00",
     logo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80",
     kategori: ["Nasi", "Nusantara", "Ayam", "Makanan Berat"],
@@ -13,7 +19,7 @@ export const mockWarungList: Warung[] = [
     name: "Kantin Bu Siti - Masakan Nusantara",
     location: "Kantin Utama Gedung A, Lantai 1",
     isOpen: true,
-    reviewCount: 320,
+    reviewCount: stats1.jumlahUlasan || 5,
     estimatedMinutes: 10,
     imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80",
     categoryLabel: "Nasi • Nusantara • Ayam",
@@ -22,8 +28,9 @@ export const mockWarungList: Warung[] = [
   {
     id: "2",
     nama: "Kedai Kopi Kampus 2.0",
-    rating: 4.9,
-    jumlahUlasan: 412,
+    rating: stats2.ratingRataRata || 4.9,
+    ratingRataRata: stats2.ratingRataRata || 4.9,
+    jumlahUlasan: stats2.jumlahUlasan || 5,
     jamBuka: "07:30 - 19:00",
     logo: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500&auto=format&fit=crop&q=80",
     kategori: ["Kopi", "Minuman", "Roti", "Snack"],
@@ -31,7 +38,7 @@ export const mockWarungList: Warung[] = [
     name: "Kedai Kopi Kampus 2.0",
     location: "Kantin Pusat, Sayap Barat",
     isOpen: true,
-    reviewCount: 412,
+    reviewCount: stats2.jumlahUlasan || 5,
     estimatedMinutes: 5,
     imageUrl: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500&auto=format&fit=crop&q=80",
     categoryLabel: "Kopi • Minuman • Roti",
@@ -40,8 +47,9 @@ export const mockWarungList: Warung[] = [
   {
     id: "3",
     nama: "Ayam Geprek Mas Bro",
-    rating: 4.7,
-    jumlahUlasan: 250,
+    rating: stats3.ratingRataRata || 4.7,
+    ratingRataRata: stats3.ratingRataRata || 4.7,
+    jumlahUlasan: stats3.jumlahUlasan || 5,
     jamBuka: "09:00 - 18:00",
     logo: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
     kategori: ["Ayam Geprek", "Nasi", "Pedas", "Makanan Berat"],
@@ -49,7 +57,7 @@ export const mockWarungList: Warung[] = [
     name: "Ayam Geprek Mas Bro",
     location: "Food Court Perpustakaan",
     isOpen: true,
-    reviewCount: 250,
+    reviewCount: stats3.jumlahUlasan || 5,
     estimatedMinutes: 12,
     imageUrl: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
     categoryLabel: "Ayam Geprek • Nasi • Pedas",
@@ -59,6 +67,7 @@ export const mockWarungList: Warung[] = [
     id: "4",
     nama: "Bakso & Mie Ayam Podomoro",
     rating: 4.6,
+    ratingRataRata: 4.6,
     jumlahUlasan: 180,
     jamBuka: "09:30 - 16:30",
     logo: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500&auto=format&fit=crop&q=80",
@@ -76,6 +85,7 @@ export const mockWarungList: Warung[] = [
     id: "5",
     nama: "Burger & Fries Uncle Sam",
     rating: 4.8,
+    ratingRataRata: 4.8,
     jumlahUlasan: 210,
     jamBuka: "10:00 - 18:00",
     logo: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80",
@@ -93,6 +103,7 @@ export const mockWarungList: Warung[] = [
     id: "6",
     nama: "Kedai Minuman Segar Ceria",
     rating: 4.7,
+    ratingRataRata: 4.7,
     jumlahUlasan: 165,
     jamBuka: "08:00 - 17:30",
     logo: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&auto=format&fit=crop&q=80",
@@ -107,3 +118,8 @@ export const mockWarungList: Warung[] = [
     categories: ["minuman", "drinks"],
   },
 ];
+
+
+export function getWarungById(id: string): Warung | undefined {
+  return mockWarungList.find((w) => String(w.id) === String(id));
+}

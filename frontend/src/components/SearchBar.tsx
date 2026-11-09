@@ -1,11 +1,13 @@
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface SearchBarProps {
   placeholder?: string;
   onSearch?: (query: string) => void;
   debounceMs?: number;
   className?: string;
+  autoNavigateOnEnter?: boolean;
 }
 
 export default function SearchBar({
@@ -13,8 +15,10 @@ export default function SearchBar({
   onSearch,
   debounceMs = 250,
   className = "",
+  autoNavigateOnEnter = true,
 }: SearchBarProps) {
   const [query, setQuery] = useState("");
+  const navigate = useNavigate();
 
   // Debounce otomatis saat pengguna mengetik kata kunci pencarian
   useEffect(() => {
@@ -40,6 +44,10 @@ export default function SearchBar({
     e.preventDefault();
     if (onSearch) {
       onSearch(query);
+    }
+    if (autoNavigateOnEnter) {
+      const q = query.trim();
+      navigate(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
     }
   };
 
