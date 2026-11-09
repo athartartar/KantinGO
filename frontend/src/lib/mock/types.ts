@@ -9,6 +9,7 @@ export interface AddOnGroup {
   judul: string;
   tipe: "single" | "multiple";
   opsi: AddOnOption[];
+  required?: boolean;
 }
 
 export interface Menu {

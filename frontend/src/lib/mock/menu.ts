@@ -17,6 +17,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-level-matah",
         judul: "Level Pedas Sambal Matah",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-lvl-0", nama: "Level 0 (Tidak Pedas)", hargaTambahan: 0 },
           { id: "opt-lvl-1", nama: "Level 1 (Sedang)", hargaTambahan: 0 },
@@ -28,6 +29,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-nasi-matah",
         judul: "Pilihan Nasi",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-nasi-putih", nama: "Nasi Putih Pulen", hargaTambahan: 0 },
           { id: "opt-nasi-uduk", nama: "Nasi Uduk Gurih", hargaTambahan: 3000 },
@@ -38,6 +40,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-extra-matah",
         judul: "Topping Tambahan",
         tipe: "multiple",
+        required: false,
         opsi: [
           { id: "opt-top-telur", nama: "Telur Dadar Crispy", hargaTambahan: 4000 },
           { id: "opt-top-keju", nama: "Ekstra Keju Mozarella Leleh", hargaTambahan: 5000 },
@@ -71,6 +74,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-telur-nasgor",
         judul: "Tingkat Kematangan Telur",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-telur-matang", nama: "Telur Ceplok Matang", hargaTambahan: 0 },
           { id: "opt-telur-setengah", nama: "Telur Ceplok Setengah Matang", hargaTambahan: 0 },
@@ -81,6 +85,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-pedas-nasgor",
         judul: "Level Pedas",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-nasgor-sedang", nama: "Sedang", hargaTambahan: 0 },
           { id: "opt-nasgor-pedas", nama: "Pedas Mantap", hargaTambahan: 0 },
@@ -91,6 +96,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-extra-nasgor",
         judul: "Topping Tambahan",
         tipe: "multiple",
+        required: false,
         opsi: [
           { id: "opt-extra-sosis", nama: "Sosis Sapi Goreng", hargaTambahan: 3000 },
           { id: "opt-extra-bakso", nama: "Bakso Sapi Iris", hargaTambahan: 3000 },
@@ -122,6 +128,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-soto-nasi",
         judul: "Penyajian Nasi",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-nasi-campur", nama: "Nasi Dicampur ke Kuah", hargaTambahan: 0 },
           { id: "opt-nasi-pisah", nama: "Nasi Dipisah", hargaTambahan: 1000 },
@@ -131,6 +138,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-soto-topping",
         judul: "Topping Tambahan",
         tipe: "multiple",
+        required: false,
         opsi: [
           { id: "opt-extra-koya", nama: "Ekstra Bubuk Koya Gurih", hargaTambahan: 2000 },
           { id: "opt-telur-rebus", nama: "Telur Rebus 1 Butir", hargaTambahan: 3500 },
@@ -162,6 +170,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-manis-esteh",
         judul: "Tingkat Manis",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-teh-normal", nama: "Manis Normal", hargaTambahan: 0 },
           { id: "opt-teh-sedang", nama: "Sedang / Less Sugar", hargaTambahan: 0 },
@@ -193,6 +202,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-cocolan-mendoan",
         judul: "Pilihan Sambal Cocol",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-sambal-kecap", nama: "Sambal Kecap Rawit", hargaTambahan: 0 },
           { id: "opt-sambal-terasi", nama: "Sambal Bawang Pedas", hargaTambahan: 1000 },
@@ -227,6 +237,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-sugar-kopi",
         judul: "Tingkat Kemanisan",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-sugar-normal", nama: "Normal Sweet", hargaTambahan: 0 },
           { id: "opt-sugar-less", nama: "Less Sugar (50%)", hargaTambahan: 0 },
@@ -237,6 +248,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-ice-kopi",
         judul: "Pilihan Es",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-ice-normal", nama: "Normal Ice", hargaTambahan: 0 },
           { id: "opt-ice-less", nama: "Less Ice", hargaTambahan: 0 },
@@ -247,6 +259,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-topping-kopi",
         judul: "Topping",
         tipe: "multiple",
+        required: false,
         opsi: [
           { id: "opt-extra-shot", nama: "Ekstra 1 Shot Espresso", hargaTambahan: 4000 },
           { id: "opt-coffee-jelly", nama: "Coffee Jelly", hargaTambahan: 3000 },
@@ -278,6 +291,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-matcha-sugar",
         judul: "Tingkat Kemanisan",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-m-normal", nama: "Normal Sweet", hargaTambahan: 0 },
           { id: "opt-m-less", nama: "Less Sugar", hargaTambahan: 0 },
@@ -287,6 +301,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-matcha-topping",
         judul: "Topping Tambahan",
         tipe: "multiple",
+        required: false,
         opsi: [
           { id: "opt-pudding", nama: "Egg Pudding", hargaTambahan: 3000 },
           { id: "opt-cheese-foam", nama: "Cream Cheese Foam", hargaTambahan: 4000 },
@@ -317,6 +332,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-ame-style",
         judul: "Suhu Penyajian",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-ame-ice", nama: "Iced Americano", hargaTambahan: 0 },
           { id: "opt-ame-hot", nama: "Hot Americano", hargaTambahan: 0 },
@@ -347,6 +363,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-roti-topping",
         judul: "Ekstra Topping Roti",
         tipe: "multiple",
+        required: false,
         opsi: [
           { id: "opt-extra-keju", nama: "Ekstra Taburan Keju", hargaTambahan: 3000 },
           { id: "opt-susu-kental", nama: "Susu Kental Manis", hargaTambahan: 1500 },
@@ -401,6 +418,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-level-bro",
         judul: "Pilihan Level Cabai",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-pedas-1", nama: "Level 1 (1 Cabai)", hargaTambahan: 0 },
           { id: "opt-pedas-3", nama: "Level 3 (3 Cabai - Sedang)", hargaTambahan: 0 },
@@ -412,6 +430,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-side-bro",
         judul: "Menu Pelengkap",
         tipe: "multiple",
+        required: false,
         opsi: [
           { id: "opt-kulit-extra", nama: "Ekstra Kulit Krispi", hargaTambahan: 5000 },
           { id: "opt-tahu-tempe", nama: "Tahu & Tempe Goreng", hargaTambahan: 3000 },
@@ -443,6 +462,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-bawang-lvl",
         judul: "Level Pedas",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-bw-1", nama: "Level 1 (Sedang)", hargaTambahan: 0 },
           { id: "opt-bw-2", nama: "Level 2 (Pedas)", hargaTambahan: 0 },
@@ -453,6 +473,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-bawang-nasi",
         judul: "Pilihan Nasi",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-bw-nasi-putih", nama: "Nasi Putih", hargaTambahan: 0 },
           { id: "opt-bw-tanpa-nasi", nama: "Tanpa Nasi", hargaTambahan: 0 },
@@ -483,6 +504,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-hemat-lvl",
         judul: "Level Pedas",
         tipe: "single",
+        required: true,
         opsi: [
           { id: "opt-hm-sedang", nama: "Sedang", hargaTambahan: 0 },
           { id: "opt-hm-pedas", nama: "Pedas", hargaTambahan: 0 },
