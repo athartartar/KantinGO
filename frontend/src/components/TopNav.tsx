@@ -1,12 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { mockCartCount } from "../lib/mock";
+import { useCart } from "../lib/cart";
 import { NAV_ITEMS } from "./navConfig";
 
 interface TopNavProps {
   cartCount?: number;
 }
 
-export default function TopNav({ cartCount = mockCartCount }: TopNavProps) {
+export default function TopNav({ cartCount }: TopNavProps) {
+  const { totalItem } = useCart();
+  const effectiveCartCount = cartCount !== undefined ? cartCount : totalItem;
+
   return (
     <header className="hidden md:block sticky top-0 z-50 bg-primary text-white shadow-md border-b border-primary/20">
       <div className="w-full max-w-6xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -41,16 +44,16 @@ export default function TopNav({ cartCount = mockCartCount }: TopNavProps) {
                         : ""
                     }`
                   }
-                  aria-label={`Keranjang Belanja. ${cartCount} item`}
+                  aria-label={`Keranjang Belanja. ${effectiveCartCount} item`}
                 >
                   <Icon className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
                   <span>{item.label}</span>
-                  {cartCount > 0 && (
+                  {effectiveCartCount > 0 && (
                     <span
                       className="bg-navy text-lime text-xs font-extrabold h-5 min-w-5 px-1.5 rounded-full flex items-center justify-center shadow-xs"
-                      aria-label={`${cartCount} item dalam keranjang`}
+                      aria-label={`${effectiveCartCount} item dalam keranjang`}
                     >
-                      {cartCount > 99 ? "99+" : cartCount}
+                      {effectiveCartCount > 99 ? "99+" : effectiveCartCount}
                     </span>
                   )}
                 </NavLink>

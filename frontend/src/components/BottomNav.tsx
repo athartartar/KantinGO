@@ -1,12 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { mockCartCount } from "../lib/mock";
+import { useCart } from "../lib/cart";
 import { NAV_ITEMS } from "./navConfig";
 
 interface BottomNavProps {
   cartCount?: number;
 }
 
-export default function BottomNav({ cartCount = mockCartCount }: BottomNavProps) {
+export default function BottomNav({ cartCount }: BottomNavProps) {
+  const { totalItem } = useCart();
+  const effectiveCartCount = cartCount !== undefined ? cartCount : totalItem;
+
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 w-full z-50 bg-primary text-white rounded-t-3xl shadow-[0_-4px_24px_rgba(19,41,192,0.25)] px-3 pt-2"
@@ -23,7 +26,7 @@ export default function BottomNav({ cartCount = mockCartCount }: BottomNavProps)
                 key={item.to}
                 to={item.to}
                 className="flex flex-col items-center justify-center relative -top-4 group cursor-pointer focus-visible:outline-hidden"
-                aria-label={`Keranjang Belanja. ${cartCount} item`}
+                aria-label={`Keranjang Belanja. ${effectiveCartCount} item`}
               >
                 {({ isActive }) => (
                   <>
@@ -35,12 +38,12 @@ export default function BottomNav({ cartCount = mockCartCount }: BottomNavProps)
                       }`}
                     >
                       <Icon className="w-6 h-6 stroke-[2.5]" aria-hidden="true" />
-                      {cartCount > 0 && (
+                      {effectiveCartCount > 0 && (
                         <span
                           className="absolute -top-1 -right-1 bg-navy text-lime text-[11px] font-bold h-5 min-w-5 px-1 rounded-full flex items-center justify-center ring-2 ring-primary shadow-sm"
-                          aria-label={`${cartCount} item dalam keranjang`}
+                          aria-label={`${effectiveCartCount} item dalam keranjang`}
                         >
-                          {cartCount > 99 ? "99+" : cartCount}
+                          {effectiveCartCount > 99 ? "99+" : effectiveCartCount}
                         </span>
                       )}
                     </div>
