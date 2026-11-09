@@ -1,0 +1,14 @@
+{
+  "name": "kantingo",
+  "private": true,
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:backend": "pnpm --filter @kantingo/backend dev",
+    "dev:frontend": "pnpm --filter @kantingo/frontend dev",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
