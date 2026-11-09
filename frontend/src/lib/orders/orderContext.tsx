@@ -3,22 +3,19 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useReducer,
 } from "react";
-import type { Order, OrderItem, OrderStatus, Review } from "../mock/types";
-import { getStoredReviews, saveStoredReviews } from "../mock/reviews";
-import { mockUser } from "../mock";
+import type {
+  Order,
+  OrderItem,
+  OrderStatus,
+} from "../mock/types";
+import { addStoredReview } from "../mock/reviews";
 
 const ORDERS_STORAGE_KEY = "kantingo_orders_v1";
 const LEGACY_STORAGE_KEY = "kantingo_orders";
 
-// Flag simulasi otomatis untuk demo (mudah dicabut saat backend siap)
-export const ENABLE_DEMO_AUTO_PROGRESS = true;
-// Waktu transisi dari "diproses" ke "siap" (30 detik)
-export const DEMO_PROGRESS_DELAY_MS = 30 * 1000;
-
-export interface OrderState {
+interface OrderState {
   orders: Order[];
 }
 
@@ -104,7 +101,7 @@ interface OrderContextValue {
   addOrder: (input: AddOrderInput) => Order;
   updateStatus: (orderId: string, status: OrderStatus) => void;
   completeOrder: (orderId: string) => void;
-  advanceOrderDemo: (orderId: string) => void;
+  advanceOrderDemo: (orderId?: string) => string | null;
   submitReview: (orderId: string, rating: number, komentar: string) => void;
   ordersByStatus: (status: OrderStatus) => Order[];
   getOrder: (id: string) => Order | undefined;
@@ -112,20 +109,134 @@ interface OrderContextValue {
 
 const OrderContext = createContext<OrderContextValue | undefined>(undefined);
 
-// Normalisasi data dari localStorage lama jika ada
+const initialSeedOrders: Order[] = [
+  {
+    id: "KGO-8921",
+    kodePesanan: "KGO-8921",
+    warungId: "1",
+    warungNama: "Kantin Bu Siti - Masakan Nusantara",
+    items: [
+      {
+        id: "seed-1",
+        menuId: "1",
+        warungId: "1",
+        nama: "Ayam Geprek Sambal Matah",
+        gambar:
+          "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
+        jumlah: 2,
+        hargaSatuan: 18000,
+        catatan: "Sambal matah dipisah ya bu",
+        addOns: [
+          { id: "lvl-2", nama: "Level 2 (Sedang)", hargaTambahan: 0 },
+          { id: "nas-1", nama: "Nasi Biasa", hargaTambahan: 3000 },
+        ],
+      },
+      {
+        id: "seed-2",
+        menuId: "2",
+        warungId: "1",
+        nama: "Es Teh Manis Jumbo",
+        gambar:
+          "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500&auto=format&fit=crop&q=80",
+        jumlah: 1,
+        hargaSatuan: 4000,
+        addOns: [],
+      },
+    ],
+    waktuPengambilan: "Secepatnya (±10 mnt)",
+    voucher: null,
+    subtotal: 42000,
+    diskon: 0,
+    biayaLayanan: 1000,
+    total: 43000,
+    dibuatPada: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    status: "siap",
+    sudahDiulas: false,
+  },
+  {
+    id: "KGO-7412",
+    kodePesanan: "KGO-7412",
+    warungId: "2",
+    warungNama: "Kedai Kopi Kampus 2.0",
+    items: [
+      {
+        id: "seed-3",
+        menuId: "201",
+        warungId: "2",
+        nama: "Kopi Susu Gula Aren Barista",
+        gambar:
+          "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500&auto=format&fit=crop&q=80",
+        jumlah: 1,
+        hargaSatuan: 12000,
+        catatan: "Less ice, normal sugar",
+        addOns: [{ id: "ice-less", nama: "Less Ice", hargaTambahan: 0 }],
+      },
+    ],
+    waktuPengambilan: "Kemarin, 14:30 WIB",
+    voucher: {
+      id: "v-welcome",
+      kode: "HEMAT5RB",
+      judul: "Voucher Pengguna Baru",
+      tipe: "nominal",
+      nilai: 5000,
+    },
+    subtotal: 12000,
+    diskon: 5000,
+    biayaLayanan: 1000,
+    total: 8000,
+    dibuatPada: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    status: "selesai",
+    sudahDiulas: false,
+  },
+  {
+    id: "KGO-6290",
+    kodePesanan: "KGO-6290",
+    warungId: "3",
+    warungNama: "Ayam Geprek Mas Bro",
+    items: [
+      {
+        id: "seed-4",
+        menuId: "301",
+        warungId: "3",
+        nama: "Paket Ayam Geprek Keju Leleh",
+        gambar:
+          "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=500&auto=format&fit=crop&q=80",
+        jumlah: 1,
+        hargaSatuan: 22000,
+        addOns: [],
+      },
+    ],
+    waktuPengambilan: "2 hari yang lalu",
+    voucher: null,
+    subtotal: 22000,
+    diskon: 0,
+    biayaLayanan: 1000,
+    total: 23000,
+    dibuatPada: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    status: "selesai",
+    sudahDiulas: true,
+    ulasan: {
+      rating: 5,
+      komentar: "Kejunya melimpah banget dan ayamnya super gurih!",
+      dibuatPada: new Date(Date.now() - 1000 * 60 * 60 * 47).toISOString(),
+    },
+  },
+];
+
+// Normalisasi data dari localStorage jika ada
 function getInitialOrders(): Order[] {
   try {
     const raw = localStorage.getItem(ORDERS_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
 
     // Coba migrasi dari legacy key sebelumnya
     const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacyRaw) {
       const legacyParsed = JSON.parse(legacyRaw);
-      if (Array.isArray(legacyParsed)) {
+      if (Array.isArray(legacyParsed) && legacyParsed.length > 0) {
         return legacyParsed.map((o: any) => ({
           id: o.id || `KGO-${Math.floor(1000 + Math.random() * 9000)}`,
           kodePesanan: o.id || `KGO-8921`,
@@ -135,15 +246,19 @@ function getInitialOrders(): Order[] {
             ? o.items.map((it: any) => ({
                 id: it.id || "it-1",
                 menuId: it.menuId || "101",
+                warungId: it.warungId || o.warungId || "1",
                 nama: it.nama || "Menu Pesanan",
-                gambar: it.gambar || "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
+                gambar:
+                  it.gambar ||
+                  "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
                 jumlah: it.jumlah || 1,
                 hargaSatuan: it.hargaSatuan || 18000,
                 addOns: it.addOns || [],
                 catatan: it.catatan,
               }))
             : [],
-          waktuPengambilan: o.pickupTime || o.waktuPengambilan || "Secepatnya (±10 mnt)",
+          waktuPengambilan:
+            o.pickupTime || o.waktuPengambilan || "Secepatnya (±10 mnt)",
           voucher: o.voucher || null,
           subtotal: o.subtotal || o.total || 18000,
           diskon: o.diskon || 0,
@@ -159,7 +274,7 @@ function getInitialOrders(): Order[] {
   } catch {
     // Abaikan jika parsing gagal
   }
-  return [];
+  return initialSeedOrders;
 }
 
 export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -189,8 +304,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const newOrder: Order = {
       id: generatedId,
-      kodePesanan: input.kodePesanan || generatedId,
-      warungId: String(input.warungId),
+      kodePesanan: generatedId,
+      warungId: input.warungId,
       warungNama: input.warungNama,
       items: input.items,
       waktuPengambilan: input.waktuPengambilan,
@@ -221,16 +336,29 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
     [updateStatus]
   );
 
-  // Helper demo untuk memajukan status secara manual: diproses -> siap -> selesai
+  // Helper demo untuk memajukan status secara manual: diproses -> siap
   const advanceOrderDemo = useCallback(
-    (orderId: string) => {
-      const order = state.orders.find((o) => o.id === orderId);
-      if (!order) return;
-      if (order.status === "diproses") {
-        updateStatus(orderId, "siap");
-      } else if (order.status === "siap") {
-        updateStatus(orderId, "selesai");
+    (orderId?: string): string | null => {
+      if (orderId) {
+        const order = state.orders.find((o) => o.id === orderId);
+        if (!order) return null;
+        if (order.status === "diproses") {
+          updateStatus(orderId, "siap");
+          return orderId;
+        } else if (order.status === "siap") {
+          updateStatus(orderId, "selesai");
+          return orderId;
+        }
+        return null;
       }
+
+      // Cari order pertama yang berstatus "diproses"
+      const target = state.orders.find((o) => o.status === "diproses");
+      if (target) {
+        updateStatus(target.id, "siap");
+        return target.id;
+      }
+      return null;
     },
     [state.orders, updateStatus]
   );
@@ -238,105 +366,91 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
   // Submit ulasan: update status pesanan dan simpan review ke daftar warung
   const submitReview = useCallback(
     (orderId: string, rating: number, komentar: string) => {
-      const targetOrder = state.orders.find((o) => o.id === orderId);
-      const dibuatPada = new Date().toISOString();
-
+      const now = new Date().toISOString();
       dispatch({
         type: "SUBMIT_REVIEW",
-        payload: { orderId, rating, komentar, dibuatPada },
+        payload: {
+          orderId,
+          rating,
+          komentar,
+          dibuatPada: now,
+        },
       });
 
-      if (targetOrder) {
-        const newReview: Review = {
-          id: `rev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          warungId: String(targetOrder.warungId),
-          namaUser: mockUser.name,
+      const order = state.orders.find((o) => o.id === orderId);
+      if (order) {
+        addStoredReview({
+          id: `rev-${Date.now()}`,
+          warungId: order.warungId,
+          namaUser: "Radhitya Fadhil",
           rating,
-          komentar: komentar.trim(),
-          tanggal: "Baru saja",
-          avatarUrl: mockUser.avatarUrl,
-        };
-
-        const existingReviews = getStoredReviews();
-        saveStoredReviews([newReview, ...existingReviews]);
+          komentar,
+          tanggal: "Hari ini",
+        });
       }
     },
     [state.orders]
   );
 
-  // Selector
+  // Selector: filter orders by status
   const ordersByStatus = useCallback(
-    (status: OrderStatus): Order[] => {
+    (status: OrderStatus) => {
       return state.orders.filter((o) => o.status === status);
     },
     [state.orders]
   );
 
+  // Selector: get order by ID
   const getOrder = useCallback(
-    (id: string): Order | undefined => {
-      return state.orders.find((o) => o.id === id || o.kodePesanan === id);
+    (id: string) => {
+      return state.orders.find(
+        (o) => o.id === id || o.kodePesanan === id
+      );
     },
     [state.orders]
   );
 
-  // ----------------------------------------------------
-  // 4. Simulasi Progres Demo (Otomatis "diproses" -> "siap" setelah 30 detik)
-  // ----------------------------------------------------
+  // Simulasi otomatis: order "diproses" berumur >30 detik otomatis jadi "siap"
   useEffect(() => {
-    if (!ENABLE_DEMO_AUTO_PROGRESS) return;
-
-    const checkAndProgressOrders = () => {
-      const currentTime = Date.now();
+    const checkAutoAdvance = () => {
+      const now = Date.now();
       state.orders.forEach((order) => {
-        if (order.status === "diproses") {
-          const createdAtTime = new Date(order.dibuatPada).getTime();
-          if (!isNaN(createdAtTime) && currentTime - createdAtTime >= DEMO_PROGRESS_DELAY_MS) {
+        if (order.status === "diproses" && order.dibuatPada) {
+          const createdAt = new Date(order.dibuatPada).getTime();
+          if (now - createdAt >= 30 * 1000) {
             updateStatus(order.id, "siap");
           }
         }
       });
     };
 
-    // Jalankan segera saat effect aktif
-    checkAndProgressOrders();
-
-    // Jalankan interval ringan setiap 5 detik
-    const interval = setInterval(checkAndProgressOrders, 5000);
+    checkAutoAdvance();
+    const interval = setInterval(checkAutoAdvance, 5000);
     return () => clearInterval(interval);
   }, [state.orders, updateStatus]);
 
-  const value = useMemo(
-    () => ({
-      orders: state.orders,
-      addOrder,
-      updateStatus,
-      completeOrder,
-      advanceOrderDemo,
-      submitReview,
-      ordersByStatus,
-      getOrder,
-    }),
-    [
-      state.orders,
-      addOrder,
-      updateStatus,
-      completeOrder,
-      advanceOrderDemo,
-      submitReview,
-      ordersByStatus,
-      getOrder,
-    ]
-  );
-
   return (
-    <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
+    <OrderContext.Provider
+      value={{
+        orders: state.orders,
+        addOrder,
+        updateStatus,
+        completeOrder,
+        advanceOrderDemo,
+        submitReview,
+        ordersByStatus,
+        getOrder,
+      }}
+    >
+      {children}
+    </OrderContext.Provider>
   );
 };
 
-export function useOrders(): OrderContextValue {
+export const useOrders = () => {
   const context = useContext(OrderContext);
   if (!context) {
     throw new Error("useOrders must be used within an OrderProvider");
   }
   return context;
-}
+};

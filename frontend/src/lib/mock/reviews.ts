@@ -198,3 +198,10 @@ export function calculateWarungStats(warungId: string, reviewsList: Review[] = g
     jumlahUlasan: totalReviews,
   };
 }
+
+export function addStoredReview(review: Review): Review[] {
+  const current = getStoredReviews();
+  const updated = [review, ...current];
+  saveStoredReviews(updated);
+  return updated;
+}

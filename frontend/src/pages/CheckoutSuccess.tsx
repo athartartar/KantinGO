@@ -209,6 +209,7 @@ export default function CheckoutSuccess() {
           {/* Tombol Utama: "Lihat Status Pesanan" -> /status */}
           <Link
             to="/status"
+            state={{ defaultTab: "diproses" }}
             className="w-full py-4 px-6 rounded-full bg-primary hover:bg-blue-bright text-white text-sm md:text-base font-bold shadow-lg shadow-primary/25 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
           >
             <Receipt className="w-5 h-5 stroke-[2.5]" />
