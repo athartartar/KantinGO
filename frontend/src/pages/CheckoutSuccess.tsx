@@ -7,6 +7,7 @@ export default function CheckoutSuccess() {
 
   const orderId = location.state?.orderId || `KGO-${Math.floor(1000 + Math.random() * 9000)}`;
   const warungNama = location.state?.warungNama || "Kantin Bu Siti";
+  const pickupTime = location.state?.pickupTime || "Secepatnya (±10 mnt)";
   const total = location.state?.total || 18000;
   const paymentMethod = location.state?.paymentMethod || "QRIS";
 
@@ -46,9 +47,9 @@ export default function CheckoutSuccess() {
           <div className="flex justify-between items-center">
             <span className="text-navy/60 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-primary" />
-              <span>Estimasi Siap</span>
+              <span>Waktu Pengambilan</span>
             </span>
-            <span className="font-bold text-emerald-700">~10 - 15 Menit</span>
+            <span className="font-bold text-emerald-700">{pickupTime}</span>
           </div>
 
           <div className="flex justify-between items-center pt-2 border-t border-blue-100 font-bold text-navy">

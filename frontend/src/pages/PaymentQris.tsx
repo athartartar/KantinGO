@@ -1,4 +1,4 @@
-import { CheckCircle2, Copy, QrCode, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Clock, Copy, QrCode, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
@@ -12,6 +12,7 @@ export default function PaymentQris() {
 
   const totalAmount = location.state?.total || subtotal || 18000;
   const warungNama = location.state?.warungNama || "Kantin Kampus";
+  const pickupTime = location.state?.pickupTime || "Secepatnya (±10 mnt)";
 
   // Countdown timer 15 menit
   const [timeLeft, setTimeLeft] = useState<number>(15 * 60);
@@ -36,6 +37,7 @@ export default function PaymentQris() {
       state: {
         total: totalAmount,
         warungNama,
+        pickupTime,
         orderId: `KGO-${Math.floor(1000 + Math.random() * 9000)}`,
         paymentMethod: "QRIS",
       },
@@ -61,9 +63,17 @@ export default function PaymentQris() {
           <p className="text-2xl md:text-3xl font-black text-primary">
             {formatRupiah(totalAmount)}
           </p>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold mt-1">
-            <span>Selesaikan dalam</span>
-            <span className="tabular-nums font-mono">{formattedTime}</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">
+              <span>Selesaikan dalam</span>
+              <span className="tabular-nums font-mono">{formattedTime}</span>
+            </div>
+            {pickupTime && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-primary text-xs font-bold">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Pengambilan: {pickupTime}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -127,7 +137,7 @@ export default function PaymentQris() {
             onClick={() => navigate("/checkout")}
             className="text-xs font-semibold text-navy/60 hover:text-navy cursor-pointer"
           >
-            Batal / Ubah Metode Pembayaran
+            Batal / Ubah Pesanan
           </button>
         </div>
       </div>
