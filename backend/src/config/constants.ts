@@ -1,0 +1,11 @@
+export const POINTS_PER_VOUCHER = 100;
+export const RUPIAH_PER_POINT = 1000;
+export const PAYMENT_EXPIRY_MINUTES = 15;
+export const PICKUP_SLOT_INTERVAL_MINUTES = 15;
+export const PICKUP_MIN_LEAD_MINUTES = 15;
+export const DEFAULT_PAGE_SIZE = 20;
+export const ORDER_CODE_PREFIX = "KGO";
+export const DEFAULT_PAYMENT_METHOD = "qris";
+export const MIN_RATING = 1;
+export const MAX_RATING = 5;
+export const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
