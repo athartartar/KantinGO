@@ -31,25 +31,26 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
         const res = await api.api.menus.$get();
         if (!res.ok) return mockPopularMenus;
         const raw = await res.json();
-        if (!raw || raw.length === 0) return mockPopularMenus;
+        if (!raw || !("data" in raw) || raw.data.length === 0) return mockPopularMenus;
 
         const canteenMap = new Map(mockWarung.map((w) => [w.id, w.name]));
-        return raw.map((item) => ({
-          id: item.id,
-          canteenId: item.canteenId,
-          canteenName: canteenMap.get(item.canteenId) || `Kantin #${item.canteenId}`,
+        return raw.data.map((item, index) => ({
+          id: index + 1,
+          canteenId: 1,
+          canteenName: canteenMap.get(1) || "Kantin #1",
           name: item.name,
           price: item.price,
-          description: "",
+          description: item.description || "",
           imageUrl:
+            item.imageUrl ||
             mockPopularMenus.find(
               (m) => m.name.toLowerCase() === item.name.toLowerCase()
             )?.imageUrl ||
             "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
           isAvailable: item.isAvailable,
           rating: 4.8,
-          soldCount: 120,
-          categoryId: "heavy",
+          soldCount: item.orderCount || 120,
+          categoryId: item.categoryId || "heavy",
         }));
       } catch {
         return mockPopularMenus;

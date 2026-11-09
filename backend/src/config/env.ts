@@ -6,6 +6,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().default("kantingo-dev-jwt-secret-key-32-chars!"),
   ADMIN_API_KEY: z.string().default("kantingo-dev-admin-api-key"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  FIREBASE_PROJECT_ID: z.string().optional().default("kantingo-d4eb1"),
 });
 
 export const env = envSchema.parse(process.env);
