@@ -44,6 +44,7 @@ export interface Warung {
   jamBuka?: string;
   logo?: string;
   kategori?: string[];
+  deskripsi?: string;
 
   // Kompatibilitas dengan komponen eksisting
   name?: string;

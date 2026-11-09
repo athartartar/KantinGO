@@ -15,6 +15,8 @@ export const mockWarungList: Warung[] = [
     jamBuka: "08:00 - 17:00",
     logo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80",
     kategori: ["Nasi", "Nusantara", "Ayam", "Makanan Berat"],
+    deskripsi:
+      "Kantin legendaris kampus menyajikan aneka olahan ayam, masakan rumahan khas nusantara, sayuran segar, dan sambal racikan istimewa dengan harga ramah kantong mahasiswa.",
     // Aliases
     name: "Kantin Bu Siti - Masakan Nusantara",
     location: "Kantin Utama Gedung A, Lantai 1",
@@ -34,6 +36,8 @@ export const mockWarungList: Warung[] = [
     jamBuka: "07:30 - 19:00",
     logo: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500&auto=format&fit=crop&q=80",
     kategori: ["Kopi", "Minuman", "Roti", "Snack"],
+    deskripsi:
+      "Tempat nongkrong andalan mahasiswa dengan pilihan kopi espresso, kopi susu gula aren barista, mocktail segar, pastry, dan camilan renyah untuk menemani waktu belajar.",
     // Aliases
     name: "Kedai Kopi Kampus 2.0",
     location: "Kantin Pusat, Sayap Barat",
@@ -53,6 +57,8 @@ export const mockWarungList: Warung[] = [
     jamBuka: "09:00 - 18:00",
     logo: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
     kategori: ["Ayam Geprek", "Nasi", "Pedas", "Makanan Berat"],
+    deskripsi:
+      "Spesialis ayam geprek crispy beraneka sambal pedas berlevel, topping keju leleh melimpah, dan porsi nasi puas yang siap bikin harimu bertenaga.",
     // Aliases
     name: "Ayam Geprek Mas Bro",
     location: "Food Court Perpustakaan",
