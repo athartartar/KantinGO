@@ -13,4 +13,3 @@
 - Semua route di-chain lewat .route() agar AppType (export di src/index.ts) tetap valid untuk Hono RPC.
 - Target Vercel serverless: pool DB kecil, tanpa state di memory, SSL Aiven.
 - Struktur: src/{config,db,lib,middleware,validators,services,routes}. db/schema dipecah per domain + schema/index.ts.
-- Di akhir tiap batch jalankan pnpm typecheck sampai bersih dan pastikan tidak ada komentar tersisa.

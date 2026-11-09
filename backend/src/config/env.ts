@@ -7,6 +7,8 @@ const envSchema = z.object({
   ADMIN_API_KEY: z.string().default("kantingo-dev-admin-api-key"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   FIREBASE_PROJECT_ID: z.string().optional().default("kantingo-d4eb1"),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
