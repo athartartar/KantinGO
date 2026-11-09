@@ -1,8 +1,10 @@
-import { ArrowLeft, Store, UtensilsCrossed } from "lucide-react";
+import { Store, UtensilsCrossed } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CATEGORIES } from "../components/CategoryList";
+import FloatingCartButton from "../components/FloatingCartButton";
+import PageHeader from "../components/PageHeader";
 import WarungCard from "../components/WarungCard";
-import { mockWarung } from "../lib/mock";
+import { CATEGORIES } from "../components/CategoryList";
+import { mockWarungList } from "../lib/mock/warung";
 
 export default function Warung() {
   const [searchParams] = useSearchParams();
@@ -18,61 +20,42 @@ export default function Warung() {
 
   // Filter warung berdasarkan kategori jika query kategori tersedia
   const filteredWarung = categorySlug
-    ? mockWarung.filter(
+    ? mockWarungList.filter(
         (w) =>
-          w.categories
-            .map((c) => c.toLowerCase())
-            .includes(categorySlug.toLowerCase()) ||
-          w.name.toLowerCase().includes(categorySlug.toLowerCase()) ||
+          (w.categories &&
+            w.categories.some(
+              (c) => c.toLowerCase() === categorySlug.toLowerCase()
+            )) ||
+          (w.kategori &&
+            w.kategori.some(
+              (c) => c.toLowerCase() === categorySlug.toLowerCase()
+            )) ||
+          w.nama?.toLowerCase().includes(categorySlug.toLowerCase()) ||
+          w.name?.toLowerCase().includes(categorySlug.toLowerCase()) ||
           (w.categoryLabel &&
             w.categoryLabel.toLowerCase().includes(categorySlug.toLowerCase()))
       )
-    : mockWarung;
+    : mockWarungList;
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:px-6 lg:px-8 md:py-8 space-y-6">
-      {/* Tombol Kembali & Navigasi Breadcrumb */}
-      <div className="flex items-center justify-between">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-blue-bright transition-colors active:scale-95 group cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary rounded-lg p-1"
-          aria-label="Kembali ke halaman utama Beranda"
-        >
-          <ArrowLeft className="w-4 h-4 stroke-[2.5] transition-transform group-hover:-translate-x-1" aria-hidden="true" />
-          <span>Kembali ke Beranda</span>
-        </Link>
+    <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6">
+      <PageHeader
+        title={categorySlug ? `Warung: ${categoryName}` : "Daftar Warung Kantin"}
+        subtitle="Pilih kantin mitra favoritmu dan pesan makanan lebih awal tanpa antre"
+        backTo="/"
+        rightAction={
+          categorySlug ? (
+            <Link
+              to="/warung"
+              className="text-xs font-semibold text-primary bg-blue-50 hover:bg-blue-100 px-3.5 py-1.5 rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Reset Filter
+            </Link>
+          ) : undefined
+        }
+      />
 
-        {categorySlug && (
-          <Link
-            to="/warung"
-            className="text-xs font-semibold text-primary bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label="Hapus filter kategori dan tampilkan semua warung"
-          >
-            Reset Filter
-          </Link>
-        )}
-      </div>
-
-      {/* Header Halaman */}
-      <header className="space-y-1">
-        <div className="flex items-center gap-2">
-          {categoryObj && (
-            <span className="text-2xl select-none">{categoryObj.emoji}</span>
-          )}
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-navy">
-            {categorySlug
-              ? `Warung dengan ${categoryName}`
-              : "Daftar Warung Kantin"}
-          </h1>
-        </div>
-        <p className="text-sm md:text-base text-navy/60">
-          {categorySlug
-            ? `Menampilkan mitra kantin yang menyediakan pilihan menu ${categoryName?.toLowerCase()}`
-            : "Pilih kantin mitra favoritmu dan pesan makanan lebih awal tanpa antre"}
-        </p>
-      </header>
-
-      {/* Daftar Warung atau Empty State */}
+      {/* Grid Warung: Mobile 1 kolom, md 2 kolom, lg 3 kolom */}
       {filteredWarung.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {filteredWarung.map((warung) => (
@@ -90,8 +73,7 @@ export default function Warung() {
               Belum ada warung ditemukan
             </h3>
             <p className="text-sm text-navy/60">
-              Tidak ada mitra kantin yang cocok dengan kategori &quot;
-              {categoryName}&quot;.
+              Tidak ada mitra kantin yang cocok dengan kategori &quot;{categoryName}&quot;.
             </p>
           </div>
           <div>
@@ -105,6 +87,8 @@ export default function Warung() {
           </div>
         </div>
       )}
+
+      <FloatingCartButton />
     </div>
   );
 }
