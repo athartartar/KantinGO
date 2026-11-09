@@ -68,6 +68,7 @@ export interface VoucherItem {
   discount: number;
   minSpend: number;
   validUntil: string;
+  status?: "active" | "used" | "expired";
 }
 
 // ----------------------------------------------------
@@ -287,7 +288,105 @@ export const mockCartItems: CartItem[] = [
 // TODO: ganti dengan API - Total jumlah item di keranjang
 export const mockCartCount: number = mockCartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-// TODO: ganti dengan API - Voucher potongan harga
+// TODO: ganti dengan API - Daftar voucher yang dapat ditukarkan (redeem)
+export const mockRedeemableVouchers: VoucherItem[] = [
+  {
+    id: "vouch-promo-1",
+    code: "KANTIN10",
+    title: "Potongan Spesial Rp10.000",
+    discount: 10000,
+    minSpend: 30000,
+    validUntil: "31 Des 2026",
+  },
+  {
+    id: "vouch-promo-2",
+    code: "HEMAT5",
+    title: "Diskon KantinGO Rp5.000",
+    discount: 5000,
+    minSpend: 15000,
+    validUntil: "31 Des 2026",
+  },
+  {
+    id: "vouch-promo-3",
+    code: "MABASTART",
+    title: "Diskon Mahasiswa Baru 20%",
+    discount: 5000,
+    minSpend: 20000,
+    validUntil: "30 Nov 2026",
+  },
+  {
+    id: "vouch-promo-4",
+    code: "LUNCHDEAL",
+    title: "Potongan Makan Siang Rp4.000",
+    discount: 4000,
+    minSpend: 15000,
+    validUntil: "25 Nov 2026",
+  },
+];
+
+// TODO: ganti dengan API - Daftar voucher yang sudah dimiliki pengguna
+export const mockInitialUserVouchers: VoucherItem[] = [
+  {
+    id: "my-vouch-1",
+    code: "WELCOMEKGO",
+    title: "Voucher Selamat Datang Rp5.000",
+    discount: 5000,
+    minSpend: 15000,
+    validUntil: "31 Des 2026",
+    status: "active",
+  },
+  {
+    id: "my-vouch-2",
+    code: "FREEOK3",
+    title: "Gratis Minuman Segar Rp3.000",
+    discount: 3000,
+    minSpend: 10000,
+    validUntil: "15 Des 2026",
+    status: "active",
+  },
+  {
+    id: "my-vouch-3",
+    code: "KOPIASIK",
+    title: "Potongan Kopi Kampus Rp2.000",
+    discount: 2000,
+    minSpend: 12000,
+    validUntil: "20 Des 2026",
+    status: "active",
+  },
+];
+
+// TODO: ganti dengan API - Riwayat voucher yang telah digunakan atau kedaluwarsa
+export const mockHistoryVouchers: VoucherItem[] = [
+  {
+    id: "hist-vouch-1",
+    code: "KANTINHEMAT",
+    title: "Diskon Makan Siang Rp5.000",
+    discount: 5000,
+    minSpend: 15000,
+    validUntil: "5 Nov 2026",
+    status: "used",
+  },
+  {
+    id: "hist-vouch-2",
+    code: "PROMOOKTOBER",
+    title: "Potongan Ongkos Pick-Up Rp3.000",
+    discount: 3000,
+    minSpend: 10000,
+    validUntil: "31 Okt 2026",
+    status: "expired",
+  },
+  {
+    id: "hist-vouch-3",
+    code: "MABASTART",
+    title: "Diskon Mahasiswa Baru 20%",
+    discount: 5000,
+    minSpend: 20000,
+    validUntil: "15 Okt 2026",
+    status: "used",
+  },
+];
+
+// TODO: ganti dengan API - Voucher potongan harga katalog
 export const mockVouchers: VoucherItem[] = [
   {
     id: "vouch-1",
@@ -306,3 +405,6 @@ export const mockVouchers: VoucherItem[] = [
     validUntil: "25 Nov 2026",
   },
 ];
+
+// TODO: ganti dengan API - Jumlah voucher yang dimiliki pengguna
+export const mockUserVoucherCount: number = mockInitialUserVouchers.length;
