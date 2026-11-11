@@ -1,11 +1,6 @@
 {
   "name": "kantingo",
   "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "*"
-    ]
-  },
   "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=22"
