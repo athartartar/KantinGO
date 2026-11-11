@@ -1,6 +1,6 @@
-import { Clock, MapPin, Star, UtensilsCrossed } from "lucide-react";
+import { ChevronRight, Clock, MapPin, Star, UtensilsCrossed } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import FloatingCartButton from "../components/FloatingCartButton";
 import MenuCard from "../components/MenuCard";
 import PageHeader from "../components/PageHeader";
@@ -8,6 +8,7 @@ import PillTabs from "../components/PillTabs";
 import { useCart } from "../lib/cart";
 import { mockMenuList } from "../lib/mock/menu";
 import { mockWarungList } from "../lib/mock/warung";
+import { calculateWarungStats } from "../lib/mock/reviews";
 
 export default function CanteenDetail() {
   const { id, warungId } = useParams<{ id?: string; warungId?: string }>();
@@ -61,10 +62,16 @@ export default function CanteenDetail() {
     );
   }
 
+  const navigate = useNavigate();
+
+  const stats = useMemo(() => {
+    return calculateWarungStats(String(warung.id));
+  }, [warung.id]);
+
   const warungNama = warung.nama || warung.name || "Warung Kantin";
   const warungLogo = warung.logo || warung.imageUrl || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80";
-  const warungRating = warung.rating ?? 4.8;
-  const warungUlasan = warung.jumlahUlasan ?? warung.reviewCount ?? 0;
+  const warungRating = stats.ratingRataRata || warung.rating || 4.8;
+  const warungUlasan = stats.jumlahUlasan || warung.jumlahUlasan || 0;
   const warungJamBuka = warung.jamBuka || "08:00 - 17:00";
   const warungLokasi = warung.location || "Kantin Kampus";
   const warungIsOpen = warung.isOpen ?? true;
@@ -74,75 +81,86 @@ export default function CanteenDetail() {
       {/* Header dengan tombol back */}
       <PageHeader title={warungNama} backTo="/warung" />
 
-      {/* Kartu Info Warung (Sesuai Wireframe Warung A) */}
-      <section className="bg-white border border-blue-100 rounded-3xl p-5 md:p-6 shadow-soft transition-all">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6">
-          {/* Logo / Foto Warung */}
-          <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-blue-100 shadow-xs">
-            <img
-              src={warungLogo}
-              alt={warungNama}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute top-1.5 left-1.5">
-              <span
-                className={`w-2.5 h-2.5 rounded-full inline-block ${
-                  warungIsOpen ? "bg-emerald-500 ring-2 ring-white" : "bg-slate-500 ring-2 ring-white"
-                }`}
-                title={warungIsOpen ? "Buka" : "Tutup"}
+      {/* Kartu Info Warung (Sesuai Wireframe Warung A) - Klik menuju profil */}
+      <section
+        onClick={() => navigate(`/warung/${warung.id}/profil`)}
+        className="bg-white border border-blue-100 rounded-3xl p-5 md:p-6 shadow-soft hover:shadow-card hover:border-primary/40 transition-all cursor-pointer group"
+        title="Klik untuk melihat profil warung dan ulasan pembeli"
+      >
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 md:gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6 flex-1 min-w-0">
+            {/* Logo / Foto Warung */}
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-blue-100 shadow-xs">
+              <img
+                src={warungLogo}
+                alt={warungNama}
+                className="w-full h-full object-cover"
               />
+              <div className="absolute top-1.5 left-1.5">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full inline-block ${
+                    warungIsOpen ? "bg-emerald-500 ring-2 ring-white" : "bg-slate-500 ring-2 ring-white"
+                  }`}
+                  title={warungIsOpen ? "Buka" : "Tutup"}
+                />
+              </div>
+            </div>
+
+            {/* Metadata Warung */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-navy tracking-tight truncate group-hover:text-primary transition-colors">
+                  {warungNama}
+                </h1>
+                <span
+                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                    warungIsOpen
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
+                      : "bg-slate-100 text-slate-700 border border-slate-200"
+                  }`}
+                >
+                  {warungIsOpen ? "Buka" : "Tutup"}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-xs md:text-sm text-navy/70">
+                {/* Rating */}
+                <span className="flex items-center gap-1 font-bold text-navy">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400 stroke-amber-400" />
+                  <span>{warungRating}</span>
+                  <span className="text-navy/50 font-normal">({warungUlasan} ulasan)</span>
+                </span>
+
+                {/* Jam Buka */}
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span>Jam Buka: <strong className="font-semibold text-navy">{warungJamBuka}</strong></span>
+                </span>
+
+                {/* Lokasi */}
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span className="truncate max-w-[200px] sm:max-w-none">{warungLokasi}</span>
+                </span>
+              </div>
+
+              {/* Kategori label */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {(warung.kategori || warung.categories || []).map((kat, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[11px] font-medium bg-surface text-navy/70 px-2.5 py-0.5 rounded-full border border-blue-100/80"
+                  >
+                    {kat}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Metadata Warung */}
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-navy tracking-tight truncate">
-                {warungNama}
-              </h1>
-              <span
-                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                  warungIsOpen
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
-                    : "bg-slate-100 text-slate-700 border border-slate-200"
-                }`}
-              >
-                {warungIsOpen ? "Buka" : "Tutup"}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-xs md:text-sm text-navy/70">
-              {/* Rating */}
-              <span className="flex items-center gap-1 font-bold text-navy">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400 stroke-amber-400" />
-                <span>{warungRating}</span>
-                <span className="text-navy/50 font-normal">({warungUlasan} ulasan)</span>
-              </span>
-
-              {/* Jam Buka */}
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-primary" />
-                <span>Jam Buka: <strong className="font-semibold text-navy">{warungJamBuka}</strong></span>
-              </span>
-
-              {/* Lokasi */}
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary" />
-                <span className="truncate max-w-[200px] sm:max-w-none">{warungLokasi}</span>
-              </span>
-            </div>
-
-            {/* Kategori label */}
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {(warung.kategori || warung.categories || []).map((kat, idx) => (
-                <span
-                  key={idx}
-                  className="text-[11px] font-medium bg-surface text-navy/70 px-2.5 py-0.5 rounded-full border border-blue-100/80"
-                >
-                  {kat}
-                </span>
-              ))}
-            </div>
+          {/* Ikon Chevron Kecil penanda navigasi profil */}
+          <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-surface text-navy/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0">
+            <ChevronRight className="w-5 h-5 stroke-[2.5]" />
           </div>
         </div>
       </section>

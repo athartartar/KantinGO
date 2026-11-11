@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useCart } from "../lib/cart";
+import { useOrders } from "../lib/orders";
 import { NAV_ITEMS } from "./navConfig";
 
 interface TopNavProps {
@@ -8,7 +9,9 @@ interface TopNavProps {
 
 export default function TopNav({ cartCount }: TopNavProps) {
   const { totalItem } = useCart();
+  const { orders } = useOrders();
   const effectiveCartCount = cartCount !== undefined ? cartCount : totalItem;
+  const hasReadyOrder = orders.some((o) => o.status === "siap");
 
   return (
     <header className="hidden md:block sticky top-0 z-50 bg-primary text-white shadow-md border-b border-primary/20">
@@ -75,12 +78,20 @@ export default function TopNav({ cartCount }: TopNavProps) {
               >
                 {({ isActive }) => (
                   <>
-                    <Icon
-                      className={`w-4 h-4 transition-transform ${
-                        isActive ? "stroke-[2.5] text-lime" : "stroke-2"
-                      }`}
-                      aria-hidden="true"
-                    />
+                    <div className="relative">
+                      <Icon
+                        className={`w-4 h-4 transition-transform ${
+                          isActive ? "stroke-[2.5] text-lime" : "stroke-2"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      {item.to === "/status" && hasReadyOrder && (
+                        <span
+                          className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-lime ring-2 ring-primary animate-pulse"
+                          title="Pesanan siap diambil"
+                        />
+                      )}
+                    </div>
                     <span>{item.label}</span>
                   </>
                 )}
