@@ -6,6 +6,7 @@ import { CartProvider } from "./lib/cart";
 import { VoucherProvider } from "./context/VoucherContext";
 import { OrderProvider } from "./lib/orders";
 import { UserProvider } from "./lib/user";
+import { NotificationProvider } from "./lib/notifications";
 import { isAuthenticated } from "./lib/auth";
 import AppLayout from "./components/AppLayout";
 import AppSplashWrapper from "./components/AppSplashWrapper";
@@ -42,7 +43,8 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <CartProvider>
         <OrderProvider>
-          <UserProvider>
+          <NotificationProvider>
+            <UserProvider>
             <VoucherProvider>
               <BrowserRouter>
                 <AppSplashWrapper>
@@ -124,6 +126,7 @@ createRoot(document.getElementById("root")!).render(
               </BrowserRouter>
             </VoucherProvider>
           </UserProvider>
+          </NotificationProvider>
         </OrderProvider>
       </CartProvider>
     </QueryClientProvider>

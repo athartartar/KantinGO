@@ -1,8 +1,9 @@
 import { Bell, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { UserProfile } from "../lib/mock";
-import { mockNotifications, mockUser } from "../lib/mock";
+import { mockUser } from "../lib/mock";
 import { useUser } from "../lib/user";
+import { useNotifications } from "../lib/notifications";
 import SearchBar from "./SearchBar";
 
 interface HomeHeaderProps {
@@ -24,8 +25,8 @@ export default function HomeHeader({
     email: userStore.email,
   };
 
-  const activeUnreadCount =
-    unreadCount ?? mockNotifications.filter((n) => !n.isRead).length;
+  const { unreadCount: notifUnreadCount } = useNotifications();
+  const activeUnreadCount = unreadCount ?? notifUnreadCount;
 
   const formattedPoints = new Intl.NumberFormat("id-ID").format(effectiveUser.points);
 

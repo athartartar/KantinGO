@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useReducer,
+  useRef,
 } from "react";
 import type {
   Order,
@@ -11,6 +12,7 @@ import type {
   OrderStatus,
 } from "../mock/types";
 import { addStoredReview } from "../mock/reviews";
+import { addNotificationToStorage } from "../notifications";
 
 const ORDERS_STORAGE_KEY = "kantingo_orders_v1";
 const LEGACY_STORAGE_KEY = "kantingo_orders";
@@ -320,6 +322,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     dispatch({ type: "ADD_ORDER", payload: newOrder });
+    addNotificationToStorage({
+      orderId: generatedId,
+      jenis: "diproses",
+      judul: "Pesanan sedang diproses",
+      pesan: `Pesananmu di ${input.warungNama} (${generatedId}) sedang disiapkan`,
+      waktu: new Date().toISOString(),
+    });
     return newOrder;
   }, []);
 
@@ -428,6 +437,35 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
     const interval = setInterval(checkAutoAdvance, 5000);
     return () => clearInterval(interval);
   }, [state.orders, updateStatus]);
+
+  // Deteksi perubahan status order dan kirim notifikasi ke localStorage
+  const prevOrdersRef = useRef<Order[]>([]);
+  useEffect(() => {
+    const prevOrders = prevOrdersRef.current;
+    state.orders.forEach((order) => {
+      const prev = prevOrders.find((o) => o.id === order.id);
+      if (prev && prev.status !== order.status) {
+        if (order.status === "siap") {
+          addNotificationToStorage({
+            orderId: order.id,
+            jenis: "siap",
+            judul: "Pesananmu sudah siap!",
+            pesan: `Pesananmu di ${order.warungNama} (${order.kodePesanan}) sudah siap diambil`,
+            waktu: new Date().toISOString(),
+          });
+        } else if (order.status === "selesai") {
+          addNotificationToStorage({
+            orderId: order.id,
+            jenis: "diterima",
+            judul: "Pesanan selesai",
+            pesan: `Pesananmu di ${order.warungNama} sudah kamu terima`,
+            waktu: new Date().toISOString(),
+          });
+        }
+      }
+    });
+    prevOrdersRef.current = state.orders;
+  }, [state.orders]);
 
   return (
     <OrderContext.Provider
