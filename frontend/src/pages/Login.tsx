@@ -41,9 +41,6 @@ export default function Login() {
           <ArrowRight className="w-4 h-4" />
         </button>
 
-        <p className="mt-8 text-xs text-navy/40">
-          Mode Frontend-Only (Tanpa Server &amp; Database Eksternal)
-        </p>
       </div>
     </div>
   );
