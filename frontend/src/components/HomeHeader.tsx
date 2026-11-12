@@ -2,6 +2,7 @@ import { Bell, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { UserProfile } from "../lib/mock";
 import { mockNotifications, mockUser } from "../lib/mock";
+import { useUser } from "../lib/user";
 import SearchBar from "./SearchBar";
 
 interface HomeHeaderProps {
@@ -11,14 +12,22 @@ interface HomeHeaderProps {
 }
 
 export default function HomeHeader({
-  user = mockUser,
+  user,
   unreadCount,
   onSearch,
 }: HomeHeaderProps) {
+  const { user: userStore } = useUser();
+  const effectiveUser = user || {
+    ...mockUser,
+    name: userStore.nama,
+    points: userStore.poin,
+    email: userStore.email,
+  };
+
   const activeUnreadCount =
     unreadCount ?? mockNotifications.filter((n) => !n.isRead).length;
 
-  const formattedPoints = new Intl.NumberFormat("id-ID").format(user.points);
+  const formattedPoints = new Intl.NumberFormat("id-ID").format(effectiveUser.points);
 
   return (
     <header className="relative w-full bg-gradient-to-r from-primary via-primary to-blue-bright text-white rounded-b-[2rem] md:rounded-b-none shadow-md">
@@ -31,7 +40,7 @@ export default function HomeHeader({
               Halo,
             </p>
             <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">
-              {user.name}
+              {effectiveUser.name}
             </h1>
             <p className="text-white/85 text-xs md:text-sm font-normal">
               Mau makan apa hari ini?
