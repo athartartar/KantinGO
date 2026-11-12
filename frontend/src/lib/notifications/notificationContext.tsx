@@ -52,10 +52,33 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [notifications]);
 
+  // Sinkronisasi otomatis saat addNotificationToStorage dipanggil di dokumen yang sama atau tab lain
+  useEffect(() => {
+    const handleSync = () => {
+      setNotifications(loadFromStorage());
+    };
+    window.addEventListener("kantingo_notifications_change", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("kantingo_notifications_change", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, []);
+
   const unreadCount = notifications.filter((n) => !n.sudahDibaca).length;
 
   const addNotification = useCallback(
     (n: Omit<AppNotification, "id" | "sudahDibaca">) => {
+      try {
+        const settingsRaw = localStorage.getItem(SETTINGS_KEY);
+        if (settingsRaw) {
+          const s = JSON.parse(settingsRaw);
+          if (s.notifikasiPesanan === false) return;
+        }
+      } catch {
+        // ignore
+      }
+
       setNotifications((prev) => {
         // Avoid duplicate by orderId+jenis
         if (prev.some((x) => x.orderId === n.orderId && x.jenis === n.jenis)) {
@@ -145,6 +168,11 @@ export function addNotificationToStorage(
 
     const updated = [newNotif, ...current];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+    // Beritahukan context di tab/window yang sama agar langsung ter-render
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("kantingo_notifications_change"));
+    }
   } catch {
     // ignore
   }

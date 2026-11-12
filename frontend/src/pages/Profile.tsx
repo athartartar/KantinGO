@@ -25,12 +25,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useOrders } from "../lib/orders";
 import { useUser } from "../lib/user";
+import { useNotifications } from "../lib/notifications";
 import { logout as authLogout } from "../lib/auth";
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, settings, updateSettings, logout } = useUser();
   const { orders } = useOrders();
+  const { unreadCount } = useNotifications();
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -318,6 +320,33 @@ export default function Profile() {
                   </div>
                   <ChevronRight className="w-4 h-4 text-navy/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                 </Link>
+
+                <Link
+                  to="/notifications"
+                  className="p-4 sm:p-4.5 flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-2xl bg-surface text-primary flex items-center justify-center shrink-0">
+                      <Bell className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-navy group-hover:text-primary transition-colors block">
+                          Pusat Notifikasi
+                        </span>
+                        {unreadCount > 0 && (
+                          <span className="text-[10px] font-black bg-lime text-navy px-1.5 py-0.5 rounded-full ring-1 ring-primary/20">
+                            {unreadCount} baru
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-navy/50">
+                        Riwayat notifikasi & status pesanan
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-navy/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                </Link>
               </div>
             </section>
 
@@ -329,15 +358,23 @@ export default function Profile() {
               <div className="bg-white border border-blue-100 rounded-3xl shadow-soft divide-y divide-slate-100 overflow-hidden">
                 {/* Toggle Notifikasi Pesanan */}
                 <div className="p-4 sm:p-4.5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 pr-2">
                     <div className="w-9 h-9 rounded-2xl bg-surface text-primary flex items-center justify-center shrink-0">
                       <Bell className="w-4 h-4" />
                     </div>
-                    <div>
-                      <span className="text-xs sm:text-sm font-bold text-navy block">
-                        Notifikasi Pesanan
-                      </span>
-                      <span className="text-[11px] text-navy/50">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-navy block">
+                          Notifikasi Pesanan
+                        </span>
+                        <Link
+                          to="/notifications"
+                          className="text-[10px] font-bold text-primary hover:underline"
+                        >
+                          Lihat semua →
+                        </Link>
+                      </div>
+                      <span className="text-[11px] text-navy/50 block">
                         Pemberitahuan saat pesanan siap diambil
                       </span>
                     </div>

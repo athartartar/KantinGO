@@ -40,21 +40,35 @@ export default function Status() {
 
   // Tab aktif
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
-    // 1. Jika datang dari checkout sukses, langsung buka tab "Diproses"
-    if (location.state?.defaultTab === "diproses") {
-      return "diproses";
+    // 1. Cek location.state?.defaultTab
+    const stateTab = location.state?.defaultTab as TabKey | undefined;
+    if (stateTab && (stateTab === "siap" || stateTab === "diproses" || stateTab === "selesai")) {
+      return stateTab;
+    }
+    // Cek query parameter ?tab=
+    const params = new URLSearchParams(location.search);
+    const paramTab = params.get("tab") as TabKey | null;
+    if (paramTab && (paramTab === "siap" || paramTab === "diproses" || paramTab === "selesai")) {
+      return paramTab;
     }
     // 2. Default tab: "Sudah Siap" jika ada, jika tidak "Diproses"
     const hasSiap = orders.some((o) => o.status === "siap");
     return hasSiap ? "siap" : "diproses";
   });
 
-  // Jika location state berubah ke "diproses"
+  // Jika location state atau query param berubah
   useEffect(() => {
-    if (location.state?.defaultTab === "diproses") {
-      setActiveTab("diproses");
+    const stateTab = location.state?.defaultTab as TabKey | undefined;
+    if (stateTab && (stateTab === "siap" || stateTab === "diproses" || stateTab === "selesai")) {
+      setActiveTab(stateTab);
+      return;
     }
-  }, [location.state]);
+    const params = new URLSearchParams(location.search);
+    const paramTab = params.get("tab") as TabKey | null;
+    if (paramTab && (paramTab === "siap" || paramTab === "diproses" || paramTab === "selesai")) {
+      setActiveTab(paramTab);
+    }
+  }, [location.state, location.search]);
 
   // Hitung jumlah order per status untuk badge di pill
   const counts = useMemo(() => {
