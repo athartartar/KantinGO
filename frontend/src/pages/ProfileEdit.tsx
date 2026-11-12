@@ -1,4 +1,4 @@
-import { CheckCircle2, Save, User as UserIcon } from "lucide-react";
+import { CheckCircle2, Save } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";

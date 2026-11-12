@@ -3,15 +3,12 @@ import {
   Clock,
   MapPin,
   MessageSquare,
-  Sparkles,
   Star,
   Store,
-  User,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import StarRating from "../components/StarRating";
 import { getWarungById } from "../lib/mock/warung";
 import { calculateWarungStats, getStoredReviews } from "../lib/mock/reviews";
 import type { Review } from "../lib/mock/types";

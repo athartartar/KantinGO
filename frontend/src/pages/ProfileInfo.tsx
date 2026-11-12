@@ -1,15 +1,11 @@
 import {
   FileText,
   HelpCircle,
-  Info,
   Mail,
-  MessageCircle,
   Phone,
-  ShieldCheck,
   Sparkles,
-  Store,
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 
 export default function ProfileInfo() {

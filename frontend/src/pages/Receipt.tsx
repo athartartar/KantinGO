@@ -1,16 +1,11 @@
 import {
   AlertCircle,
-  ArrowLeft,
   CheckCircle2,
   Clock,
-  HelpCircle,
-  Receipt as ReceiptIcon,
   Sparkles,
   Star,
   Store,
   Tag,
-  UtensilsCrossed,
-  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";

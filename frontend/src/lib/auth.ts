@@ -1,4 +1,5 @@
 const TOKEN_KEY = "kantingo_auth_token";
+const DUMMY_TOKEN = "dummy_token_kantingo_local_user";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -17,6 +18,10 @@ export function removeToken(): void {
 
 export function isAuthenticated(): boolean {
   return !!getToken();
+}
+
+export function loginDummy(): void {
+  setToken(DUMMY_TOKEN);
 }
 
 export function logout(): void {

@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Plus, RefreshCw, Utensils } from "lucide-react";
 import { Link } from "react-router-dom";
-import { api } from "../lib/api";
+import { getMenus, getWarungs } from "../lib/api";
 import type { MenuItem } from "../lib/mock";
-import { mockPopularMenus, mockWarung } from "../lib/mock";
+import { mockPopularMenus } from "../lib/mock";
 
 const formatRupiah = (amount: number) => {
   return new Intl.NumberFormat("id-ID", {
@@ -18,7 +18,6 @@ interface PopularMenuListProps {
 }
 
 export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
-  // Ambil data dari route /menus via Hono RPC jika ada, fallback ke mockPopularMenus
   const {
     data: menus = mockPopularMenus,
     isLoading,
@@ -28,31 +27,28 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
     queryKey: ["menus"],
     queryFn: async () => {
       try {
-        const res = await api.api.menus.$get();
-        if (!res.ok) return mockPopularMenus;
-        const raw = await res.json();
-        const rawItems = Array.isArray(raw) ? raw : (raw as any)?.data || [];
-        if (!rawItems || rawItems.length === 0) return mockPopularMenus;
+        const raw = await getMenus();
+        if (!raw || raw.length === 0) return mockPopularMenus;
+        const warungs = await getWarungs();
+        const canteenMap = new Map(warungs.map((w) => [String(w.id), w.name || w.nama || "Kantin"]));
 
-        const canteenMap = new Map(mockWarung.map((w) => [String(w.id), w.name]));
-        return rawItems.map((item: any) => ({
-          id: item.id,
-          canteenId: item.canteenId ?? item.stallId,
-          canteenName:
-            canteenMap.get(String(item.canteenId ?? item.stallId)) ||
-            `Kantin #${item.canteenId ?? item.stallId}`,
-          name: item.name,
-          price: item.price,
-          description: item.description || "",
+        return raw.map((item, index) => ({
+          id: typeof item.id === "number" ? item.id : index + 1,
+          canteenId: Number(item.warungId) || 1,
+          canteenName: canteenMap.get(String(item.warungId)) || item.canteenName || `Kantin #${item.warungId}`,
+          name: item.nama || item.name || "Menu",
+          price: item.harga ?? item.price ?? 0,
+          description: item.deskripsi || item.description || "",
           imageUrl:
+            item.gambar ||
             item.imageUrl ||
             mockPopularMenus.find(
-              (m) => m.name.toLowerCase() === item.name.toLowerCase()
+              (m) => (m.name || "").toLowerCase() === (item.nama || item.name || "").toLowerCase()
             )?.imageUrl ||
             "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
           isAvailable: item.isAvailable ?? true,
-          rating: 4.8,
-          soldCount: item.orderCount || 120,
+          rating: item.rating ?? 4.8,
+          soldCount: item.soldCount || 120,
           categoryId: item.categoryId || "heavy",
         }));
       } catch {
@@ -73,7 +69,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
       aria-labelledby="popular-menu-heading"
       className="bg-primary text-white rounded-3xl p-4 md:p-6 shadow-soft"
     >
-      {/* Header Kartu Besar Biru */}
       <div className="flex items-center justify-between mb-4">
         <h2
           id="popular-menu-heading"
@@ -91,7 +86,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
         </Link>
       </div>
 
-      {/* State Loading Skeleton */}
       {isLoading && (
         <div
           role="status"
@@ -116,7 +110,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
         </div>
       )}
 
-      {/* State Error */}
       {isError && (
         <div
           role="alert"
@@ -134,7 +127,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
         </div>
       )}
 
-      {/* Empty State jika kosong sama sekali */}
       {!isLoading && !isError && menus.length === 0 && (
         <div className="bg-white/10 rounded-2xl p-8 text-center space-y-2 border border-white/10">
           <Utensils className="w-8 h-8 text-white/50 mx-auto" aria-hidden="true" />
@@ -142,7 +134,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
         </div>
       )}
 
-      {/* Kontainer Menu: Scroll horizontal di mobile (kartu ke-3 terpotong), Grid di desktop (hingga 4 menu) */}
       {!isLoading && menus.length > 0 && (
         <div className="flex gap-3 overflow-x-auto pb-2 pt-1 -mx-1 px-1 scrollbar-none snap-x snap-mandatory md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:pb-0 md:pt-0">
           {menus.map((menu, index) => (
@@ -152,7 +143,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
                 index >= 4 ? "md:hidden" : ""
               }`}
             >
-              {/* Foto Menu */}
               <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2.5 bg-slate-100 shrink-0">
                 <img
                   src={menu.imageUrl}
@@ -162,7 +152,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
                 />
               </div>
 
-              {/* Informasi Menu */}
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <h3
@@ -179,7 +168,6 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
                   </p>
                 </div>
 
-                {/* Harga & Tombol Tambah (+) */}
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
                   <span className="font-extrabold text-xs md:text-sm text-primary">
                     {formatRupiah(menu.price)}

@@ -42,9 +42,9 @@ type CartAction =
 
 function areAddOnsEqual(a: CartAddOn[] = [], b: CartAddOn[] = []): boolean {
   if (a.length !== b.length) return false;
-  const sortedA = [...a].sort((x, y) => x.optionId.localeCompare(y.optionId));
-  const sortedB = [...b].sort((x, y) => x.optionId.localeCompare(y.optionId));
-  return sortedA.every((opt, idx) => opt.optionId === sortedB[idx].optionId);
+  const sortedA = [...a].sort((x, y) => (x.optionId || x.id || "").localeCompare(y.optionId || y.id || ""));
+  const sortedB = [...b].sort((x, y) => (x.optionId || x.id || "").localeCompare(y.optionId || y.id || ""));
+  return sortedA.every((opt, idx) => (opt.optionId || opt.id || "") === (sortedB[idx].optionId || sortedB[idx].id || ""));
 }
 
 function cartReducer(state: CartState, action: CartAction): CartState {
@@ -58,7 +58,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const jumlah = Math.max(1, item.jumlah ?? 1);
       const catatan = (item.catatan || "").trim();
 
-      // Cari apakah item persis sama sudah ada di keranjang
       const existingIndex = state.items.findIndex(
         (i) =>
           i.menuId === item.menuId &&
@@ -213,26 +212,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           return parsed;
         }
       }
-    } catch {
-      // Abaikan bila terjadi error akses localStorage
-    }
+    } catch {}
     return initialCartState;
   });
 
-  // State untuk dialog konfirmasi jika ganti warung
   const [conflictDialog, setConflictDialog] = useState<{
     isOpen: boolean;
     pendingItem?: AddItemInput;
     pendingWarungNama?: string;
   }>({ isOpen: false });
 
-  // Sinkronisasi ke localStorage setiap kali state berubah
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // Abaikan bila gagal simpan
-    }
+    } catch {}
   }, [state]);
 
   const totalItem = useMemo(() => {
@@ -251,13 +244,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const addItem = useCallback(
     (item: AddItemInput, warungNama?: string): boolean => {
-      // Aturan: cart hanya boleh berisi item dari 1 warung
       if (
         state.items.length > 0 &&
         state.warungId &&
         state.warungId !== item.warungId
       ) {
-        // Tampilkan konfirmasi ganti warung
         setConflictDialog({
           isOpen: true,
           pendingItem: item,
@@ -320,7 +311,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     <CartContext.Provider value={contextValue}>
       {children}
 
-      {/* Modal Konfirmasi Ganti Warung */}
       {conflictDialog.isOpen && (
         <div
           role="dialog"

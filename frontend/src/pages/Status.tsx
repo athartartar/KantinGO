@@ -1,5 +1,4 @@
 import {
-  AlertCircle,
   CheckCircle2,
   ChevronRight,
   Clock,

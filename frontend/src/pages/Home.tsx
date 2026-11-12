@@ -6,7 +6,7 @@ import HomeHeader from "../components/HomeHeader";
 import PopularMenuList from "../components/PopularMenuList";
 import WarungCard from "../components/WarungCard";
 import WarungList from "../components/WarungList";
-import { api } from "../lib/api";
+import { getMenus, getWarungs } from "../lib/api";
 import type { MenuItem } from "../lib/mock";
 import { mockPopularMenus, mockWarung } from "../lib/mock";
 
@@ -21,33 +21,32 @@ const formatRupiah = (amount: number) => {
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Query menu terintegrasi (dengan fallback mockPopularMenus)
   const { data: allMenus = mockPopularMenus } = useQuery<MenuItem[]>({
     queryKey: ["menus"],
     queryFn: async () => {
       try {
-        const res = await api.api.menus.$get();
-        if (!res.ok) return mockPopularMenus;
-        const raw = await res.json();
-        if (!raw || !("data" in raw) || raw.data.length === 0) return mockPopularMenus;
+        const raw = await getMenus();
+        if (!raw || raw.length === 0) return mockPopularMenus;
+        const warungs = await getWarungs();
+        const canteenMap = new Map(warungs.map((w) => [String(w.id), w.name || w.nama || "Kantin"]));
 
-        const canteenMap = new Map(mockWarung.map((w) => [w.id, w.name]));
-        return raw.data.map((item, index) => ({
-          id: index + 1,
-          canteenId: 1,
-          canteenName: canteenMap.get(1) || "Kantin #1",
-          name: item.name,
-          price: item.price,
-          description: item.description || "",
+        return raw.map((item, index) => ({
+          id: typeof item.id === "number" ? item.id : index + 1,
+          canteenId: Number(item.warungId) || 1,
+          canteenName: canteenMap.get(String(item.warungId)) || item.canteenName || "Kantin #1",
+          name: item.nama || item.name || "Menu",
+          price: item.harga ?? item.price ?? 0,
+          description: item.deskripsi || item.description || "",
           imageUrl:
+            item.gambar ||
             item.imageUrl ||
             mockPopularMenus.find(
-              (m) => m.name.toLowerCase() === item.name.toLowerCase()
+              (m) => (m.name || "").toLowerCase() === (item.nama || item.name || "").toLowerCase()
             )?.imageUrl ||
             "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
-          isAvailable: item.isAvailable,
-          rating: 4.8,
-          soldCount: item.orderCount || 120,
+          isAvailable: item.isAvailable ?? true,
+          rating: item.rating ?? 4.8,
+          soldCount: item.soldCount || 120,
           categoryId: item.categoryId || "heavy",
         }));
       } catch {
@@ -60,7 +59,6 @@ export default function Home() {
   const queryClean = searchQuery.trim().toLowerCase();
   const isSearching = queryClean.length > 0;
 
-  // Filter Menu yang cocok dengan kata kunci
   const matchingMenus = isSearching
     ? allMenus.filter(
         (m) =>
@@ -70,7 +68,6 @@ export default function Home() {
       )
     : [];
 
-  // Filter Warung yang cocok dengan kata kunci
   const matchingWarungs = isSearching
     ? mockWarung.filter(
         (w) =>
@@ -85,18 +82,11 @@ export default function Home() {
 
   return (
     <div className="w-full">
-      {/* 1. Header sapaan & SearchBar debounced yang menumpuk di tepi bawah */}
       <HomeHeader onSearch={setSearchQuery} />
 
-      {/* 2. Konten Dinamis: Jika sedang mencari, tampilkan hasil; jika tidak, tampilkan Homepage normal */}
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-10 md:pt-14 space-y-8 md:space-y-12">
         {isSearching ? (
-          /* Tampilan Hasil Pencarian */
-          <section
-            aria-live="polite"
-            className="space-y-8 animate-fadeIn"
-          >
-            {/* Header Hasil Pencarian */}
+          <section aria-live="polite" className="space-y-8 animate-fadeIn">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-blue-100">
               <div>
                 <h2 className="text-xl md:text-2xl font-extrabold text-navy tracking-tight">
@@ -120,7 +110,6 @@ export default function Home() {
 
             {hasResults ? (
               <div className="space-y-8">
-                {/* Hasil Menu */}
                 {matchingMenus.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -178,7 +167,6 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Hasil Warung */}
                 {matchingWarungs.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -196,7 +184,6 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              /* Empty State jika tidak ada menu maupun warung yang cocok */
               <div
                 role="status"
                 className="bg-white border border-blue-100 rounded-3xl p-10 md:p-14 text-center space-y-4 shadow-soft max-w-md mx-auto my-6"
@@ -226,7 +213,6 @@ export default function Home() {
             )}
           </section>
         ) : (
-          /* Tampilan Homepage Normal */
           <>
             <PopularMenuList />
             <CategoryList />

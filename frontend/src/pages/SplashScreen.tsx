@@ -4,22 +4,12 @@ import { isAuthenticated } from "../lib/auth";
 import logoUrl from "../../logo_KantinGO.png";
 
 interface SplashScreenProps {
-  /** True jika dipanggil sebagai overlay aplikasi saat pertama kali buka */
   isOverlay?: boolean;
-  /** State fade-out sebelum di-unmount */
   isFading?: boolean;
-  /** Durasi tampilan splash dalam milidetik jika berdiri sendiri */
   durationMs?: number;
-  /** Callback opsional saat splash selesai */
   onFinish?: () => void;
 }
 
-/**
- * Splash screen KantinGO sesuai referensi desain:
- * - Latar belakang gradien kuning cerah (#F8FF75 ke #FAFFA8)
- * - Logo KantinGO berada tepat di tengah tanpa teks tambahan
- * - Efek transisi halus (zoom-in & fade-out)
- */
 export default function SplashScreen({
   isOverlay = false,
   isFading = false,
@@ -30,7 +20,6 @@ export default function SplashScreen({
   const [internalFading, setInternalFading] = useState(false);
 
   useEffect(() => {
-    // Jika sebagai halaman rute langsung (/splash)
     if (!isOverlay) {
       const fadeTimer = setTimeout(() => {
         setInternalFading(true);

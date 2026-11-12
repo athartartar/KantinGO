@@ -1,11 +1,7 @@
 import {
   AlertCircle,
-  ArrowLeft,
   CheckCircle2,
-  Clock,
-  Receipt,
   Send,
-  Sparkles,
   Store,
   X,
 } from "lucide-react";

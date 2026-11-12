@@ -47,9 +47,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       if (saved) {
         return { ...initialUser, ...JSON.parse(saved) };
       }
-    } catch {
-      // Abaikan jika storage gagal
-    }
+    } catch {}
     return initialUser;
   });
 
@@ -59,27 +57,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       if (saved) {
         return { ...initialSettings, ...JSON.parse(saved) };
       }
-    } catch {
-      // Abaikan jika storage gagal
-    }
+    } catch {}
     return initialSettings;
   });
 
-  // Simpan perubahan ke localStorage
   useEffect(() => {
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    } catch {
-      // Abaikan
-    }
+    } catch {}
   }, [user]);
 
   useEffect(() => {
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    } catch {
-      // Abaikan
-    }
+    } catch {}
   }, [settings]);
 
   const getUser = useCallback(() => {
@@ -95,14 +86,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const logout = useCallback(() => {
-    // Prototype: Bersihkan state lokal dan localStorage
-    // TODO: Hubungkan dengan auth service asli saat backend authentication diaktifkan
     try {
       localStorage.removeItem(USER_STORAGE_KEY);
       localStorage.removeItem(SETTINGS_STORAGE_KEY);
-    } catch {
-      // Abaikan
-    }
+    } catch {}
     setUser(initialUser);
     setSettings(initialSettings);
   }, []);

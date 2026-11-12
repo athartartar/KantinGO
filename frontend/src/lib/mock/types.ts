@@ -21,8 +21,6 @@ export interface Menu {
   gambar: string;
   kategori: string;
   addOnGroups: AddOnGroup[];
-
-  // Kompatibilitas dengan komponen eksisting
   name?: string;
   price?: number;
   imageUrl?: string;
@@ -45,8 +43,6 @@ export interface Warung {
   logo?: string;
   kategori?: string[];
   deskripsi?: string;
-
-  // Kompatibilitas dengan komponen eksisting
   name?: string;
   location?: string;
   isOpen?: boolean;
@@ -58,9 +54,10 @@ export interface Warung {
 }
 
 export interface CartAddOn {
-  groupId: string;
+  groupId?: string;
   groupJudul?: string;
-  optionId: string;
+  optionId?: string;
+  id?: string;
   nama: string;
   hargaTambahan: number;
 }
@@ -73,12 +70,8 @@ export interface CartItem {
   addOns: CartAddOn[];
   catatan?: string;
   hargaSatuan: number;
-
-  // Metadata pembantu tampilan
   menu?: Menu;
   warungNama?: string;
-
-  // Kompatibilitas
   quantity?: number;
   notes?: string;
   menuItem?: any;
@@ -91,8 +84,6 @@ export interface Voucher {
   tipe: "persen" | "nominal";
   nilai: number;
   minimalBelanja: number;
-
-  // Kompatibilitas
   code?: string;
   title?: string;
   discount?: number;
@@ -101,9 +92,6 @@ export interface Voucher {
   status?: "active" | "used" | "expired";
 }
 
-// ----------------------------------------------------
-// Review & Order Model
-// ----------------------------------------------------
 export interface Review {
   id: string;
   warungId: string;
@@ -123,8 +111,6 @@ export interface OrderItem {
   hargaSatuan: number;
   addOns: CartAddOn[];
   catatan?: string;
-
-  // Kompatibilitas
   warungId?: string;
   menu?: Menu;
   quantity?: number;

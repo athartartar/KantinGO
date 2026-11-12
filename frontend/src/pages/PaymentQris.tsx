@@ -1,7 +1,5 @@
 import {
-  AlertCircle,
   AlertTriangle,
-  ArrowLeft,
   CheckCircle2,
   Clock,
   Copy,
@@ -10,7 +8,6 @@ import {
   ShieldCheck,
   Sparkles,
   Store,
-  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";

@@ -11,8 +11,6 @@ import {
   Lock,
   LogOut,
   MapPin,
-  MessageSquare,
-  ShieldAlert,
   Sparkles,
   Star,
   Sun,
