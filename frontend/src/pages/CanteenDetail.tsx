@@ -84,11 +84,11 @@ export default function CanteenDetail() {
       {/* Kartu Info Warung (Sesuai Wireframe Warung A) - Klik menuju profil */}
       <section
         onClick={() => navigate(`/warung/${warung.id}/profil`)}
-        className="bg-white border border-blue-100 rounded-3xl p-5 md:p-6 shadow-soft hover:shadow-card hover:border-primary/40 transition-all cursor-pointer group"
+        className="w-full min-w-0 max-w-full overflow-hidden bg-white border border-blue-100 rounded-3xl p-5 md:p-6 shadow-soft hover:shadow-card hover:border-primary/40 transition-all cursor-pointer group"
         title="Klik untuk melihat profil warung dan ulasan pembeli"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 md:gap-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6 flex-1 min-w-0">
+        <div className="w-full min-w-0 max-w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 md:gap-6">
+          <div className="w-full min-w-0 max-w-full flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6 flex-1">
             {/* Logo / Foto Warung */}
             <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-blue-100 shadow-xs">
               <img
@@ -107,13 +107,13 @@ export default function CanteenDetail() {
             </div>
 
             {/* Metadata Warung */}
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-navy tracking-tight truncate group-hover:text-primary transition-colors">
+            <div className="w-full min-w-0 max-w-full flex-1 space-y-2">
+              <div className="w-full min-w-0 max-w-full flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-navy tracking-tight leading-tight break-words [overflow-wrap:anywhere] whitespace-normal group-hover:text-primary transition-colors">
                   {warungNama}
                 </h1>
                 <span
-                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
                     warungIsOpen
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
                       : "bg-slate-100 text-slate-700 border border-slate-200"
@@ -123,33 +123,33 @@ export default function CanteenDetail() {
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-y-1.5 gap-x-4 text-xs md:text-sm text-navy/70">
+              <div className="w-full min-w-0 max-w-full flex flex-wrap items-center gap-y-1.5 gap-x-4 text-xs md:text-sm text-navy/70">
                 {/* Rating */}
-                <span className="flex items-center gap-1 font-bold text-navy">
+                <span className="flex items-center gap-1 font-bold text-navy shrink-0">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400 stroke-amber-400" />
                   <span>{warungRating}</span>
                   <span className="text-navy/50 font-normal">({warungUlasan} ulasan)</span>
                 </span>
 
                 {/* Jam Buka */}
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 shrink-0">
                   <Clock className="w-4 h-4 text-primary" />
                   <span>Jam Buka: <strong className="font-semibold text-navy">{warungJamBuka}</strong></span>
                 </span>
 
                 {/* Lokasi */}
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  <span className="truncate max-w-[200px] sm:max-w-none">{warungLokasi}</span>
+                <span className="flex items-center gap-1.5 min-w-0 max-w-full break-words [overflow-wrap:anywhere]">
+                  <MapPin className="w-4 h-4 text-primary shrink-0" />
+                  <span className="break-words [overflow-wrap:anywhere]">{warungLokasi}</span>
                 </span>
               </div>
 
               {/* Kategori label */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
+              <div className="w-full min-w-0 max-w-full flex flex-wrap gap-1.5 pt-1">
                 {(warung.kategori || warung.categories || []).map((kat, idx) => (
                   <span
                     key={idx}
-                    className="text-[11px] font-medium bg-surface text-navy/70 px-2.5 py-0.5 rounded-full border border-blue-100/80"
+                    className="text-[11px] font-medium bg-surface text-navy/70 px-2.5 py-0.5 rounded-full border border-blue-100/80 break-words"
                   >
                     {kat}
                   </span>

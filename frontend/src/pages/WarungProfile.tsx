@@ -90,7 +90,7 @@ export default function WarungProfile() {
       {/* HEADER PROFIL WARUNG (Wireframe Warung A Profil)    */}
       {/* Logo, Nama Warung, Pill Kecil (Kategori & Jam Buka) */}
       {/* ==================================================== */}
-      <section className="bg-white border border-blue-100 rounded-3xl p-5 md:p-6 shadow-soft flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6">
+      <section className="w-full min-w-0 max-w-full overflow-hidden bg-white border border-blue-100 rounded-3xl p-5 md:p-6 shadow-soft flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6">
         {/* Logo Warung */}
         <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-blue-100 shadow-xs">
           <img
@@ -101,19 +101,19 @@ export default function WarungProfile() {
         </div>
 
         {/* Informasi Utama */}
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="space-y-0.5">
+        <div className="w-full min-w-0 max-w-full flex-1 space-y-2">
+          <div className="space-y-0.5 w-full min-w-0 max-w-full">
             <span className="text-[10px] uppercase font-bold tracking-wider text-primary">
               Mitra Kantin Terverifikasi
             </span>
-            <h1 className="text-xl md:text-2xl font-black text-navy tracking-tight truncate">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-navy tracking-tight leading-tight break-words [overflow-wrap:anywhere] whitespace-normal">
               {warungNama}
             </h1>
           </div>
 
           {/* Pill Kecil Kategori & Jam Buka */}
-          <div className="flex flex-wrap items-center gap-2 pt-0.5">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="w-full min-w-0 max-w-full flex flex-wrap items-center gap-2 pt-0.5">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Buka: {warungJamBuka}</span>
             </span>
@@ -121,7 +121,7 @@ export default function WarungProfile() {
             {(warung.kategori || warung.categories || []).map((kat, idx) => (
               <span
                 key={idx}
-                className="text-xs font-semibold bg-surface text-navy/70 px-3 py-1 rounded-full border border-blue-100/80"
+                className="text-xs font-semibold bg-surface text-navy/70 px-3 py-1 rounded-full border border-blue-100/80 break-words"
               >
                 {kat}
               </span>
