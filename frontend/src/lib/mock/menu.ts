@@ -170,7 +170,7 @@ export const mockMenuList: Menu[] = [
         id: "addon-manis-esteh",
         judul: "Tingkat Manis",
         tipe: "single",
-        required: true,
+        required: false,
         opsi: [
           { id: "opt-teh-normal", nama: "Manis Normal", hargaTambahan: 0 },
           { id: "opt-teh-sedang", nama: "Sedang / Less Sugar", hargaTambahan: 0 },

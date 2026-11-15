@@ -40,8 +40,8 @@ export interface Warung {
 }
 
 export interface MenuItem {
-  id: number;
-  canteenId: number;
+  id: number | string;
+  canteenId: number | string;
   canteenName: string;
   name: string;
   price: number;
@@ -52,6 +52,14 @@ export interface MenuItem {
   rating: number;
   soldCount: number;
   categoryId: string;
+  warungId?: string;
+  menuId?: string;
+  nama?: string;
+  harga?: number;
+  gambar?: string;
+  deskripsi?: string;
+  kategori?: string;
+  addOnGroups?: any[];
 }
 
 export interface CartItem {
@@ -201,71 +209,169 @@ export const mockWarung: Warung[] = [
 // TODO: ganti dengan API - Menu Populer Terlaris
 export const mockPopularMenus: MenuItem[] = [
   {
-    id: 101,
+    id: "101",
+    menuId: "101",
+    warungId: "1",
     canteenId: 1,
     canteenName: "Kantin Bu Siti",
     name: "Ayam Geprek Sambal Matah",
+    nama: "Ayam Geprek Sambal Matah",
     price: 18000,
+    harga: 18000,
     originalPrice: 20000,
     description: "Ayam krispi gurih dengan ulekan sambal matah khas Bali dan nasi hangat pulen.",
+    deskripsi: "Ayam krispi gurih dengan ulekan sambal matah khas Bali dan nasi hangat pulen.",
     imageUrl: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
+    gambar: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=80",
     isAvailable: true,
     rating: 4.9,
     soldCount: 1420,
     categoryId: "heavy",
+    kategori: "Makanan Berat",
+    addOnGroups: [
+      {
+        id: "addon-level-matah",
+        judul: "Level Pedas Sambal Matah",
+        tipe: "single",
+        required: true,
+        opsi: [
+          { id: "opt-lvl-0", nama: "Level 0 (Tidak Pedas)", hargaTambahan: 0 },
+          { id: "opt-lvl-1", nama: "Level 1 (Sedang)", hargaTambahan: 0 },
+          { id: "opt-lvl-2", nama: "Level 2 (Pedas)", hargaTambahan: 0 },
+          { id: "opt-lvl-3", nama: "Level 3 (Ekstra Pedas)", hargaTambahan: 2000 },
+        ],
+      },
+      {
+        id: "addon-nasi-matah",
+        judul: "Pilihan Nasi",
+        tipe: "single",
+        required: true,
+        opsi: [
+          { id: "opt-nasi-putih", nama: "Nasi Putih Pulen", hargaTambahan: 0 },
+          { id: "opt-nasi-uduk", nama: "Nasi Uduk Gurih", hargaTambahan: 3000 },
+          { id: "opt-tanpa-nasi", nama: "Tanpa Nasi", hargaTambahan: 0 },
+        ],
+      },
+    ],
   },
   {
-    id: 102,
+    id: "102",
+    menuId: "102",
+    warungId: "1",
     canteenId: 1,
     canteenName: "Kantin Bu Siti",
     name: "Nasi Goreng Spesial Kampus",
+    nama: "Nasi Goreng Spesial Kampus",
     price: 15000,
+    harga: 15000,
     description: "Nasi goreng bumbu racik istimewa dengan telur mata sapi, suwiran ayam, dan kerupuk.",
+    deskripsi: "Nasi goreng bumbu racik istimewa dengan telur mata sapi, suwiran ayam, dan kerupuk.",
     imageUrl: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=500&auto=format&fit=crop&q=80",
+    gambar: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=500&auto=format&fit=crop&q=80",
     isAvailable: true,
     rating: 4.8,
     soldCount: 980,
     categoryId: "heavy",
+    kategori: "Makanan Berat",
+    addOnGroups: [
+      {
+        id: "addon-telur-nasgor",
+        judul: "Tingkat Kematangan Telur",
+        tipe: "single",
+        required: true,
+        opsi: [
+          { id: "opt-telur-matang", nama: "Telur Ceplok Matang", hargaTambahan: 0 },
+          { id: "opt-telur-setengah", nama: "Telur Ceplok Setengah Matang", hargaTambahan: 0 },
+          { id: "opt-telur-dadar", nama: "Telur Dadar Rempah", hargaTambahan: 0 },
+        ],
+      },
+    ],
   },
   {
-    id: 103,
-    canteenId: 2,
-    canteenName: "Kedai Kopi Kampus",
-    name: "Kopi Susu Gula Aren Barista",
-    price: 12000,
-    originalPrice: 15000,
-    description: "Espresso robusta lokal dipadu susu creamy dan manis legit gula aren murni.",
-    imageUrl: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=500&auto=format&fit=crop&q=80",
-    isAvailable: true,
-    rating: 4.9,
-    soldCount: 2310,
-    categoryId: "drinks",
-  },
-  {
-    id: 104,
-    canteenId: 3,
-    canteenName: "Ayam Geprek Mas Bro",
-    name: "Paket Ayam Geprek Keju Leleh",
-    price: 22000,
-    description: "Ayam geprek pedas level 1-5 berlumur lelehan keju mozarella gurih nikmat.",
-    imageUrl: "https://images.unsplash.com/photo-1562967914-608f82629710?w=500&auto=format&fit=crop&q=80",
+    id: "103",
+    menuId: "103",
+    warungId: "1",
+    canteenId: 1,
+    canteenName: "Kantin Bu Siti",
+    name: "Soto Ayam Lamongan",
+    nama: "Soto Ayam Lamongan",
+    price: 16000,
+    harga: 16000,
+    description: "Kuah kuning gurih kaya rempah dengan taburan koya gurih, suwiran ayam, soun lembut, dan kol segar.",
+    deskripsi: "Kuah kuning gurih kaya rempah dengan taburan koya gurih, suwiran ayam, soun lembut, dan kol segar.",
+    imageUrl: "https://images.unsplash.com/photo-1572656631137-7935297eff55?w=500&auto=format&fit=crop&q=80",
+    gambar: "https://images.unsplash.com/photo-1572656631137-7935297eff55?w=500&auto=format&fit=crop&q=80",
     isAvailable: true,
     rating: 4.7,
-    soldCount: 860,
+    soldCount: 650,
     categoryId: "heavy",
+    kategori: "Makanan Berat",
+    addOnGroups: [
+      {
+        id: "addon-soto-nasi",
+        judul: "Penyajian Nasi",
+        tipe: "single",
+        required: true,
+        opsi: [
+          { id: "opt-nasi-campur", nama: "Nasi Dicampur ke Kuah", hargaTambahan: 0 },
+          { id: "opt-nasi-pisah", nama: "Nasi Dipisah", hargaTambahan: 1000 },
+        ],
+      },
+    ],
   },
   {
-    id: 105,
-    canteenId: 2,
-    canteenName: "Kedai Kopi Kampus",
-    name: "Matcha Latte Creamy Ice",
-    price: 14000,
-    description: "Bubuk teh hijau matcha Jepang asli dengan susu segar lembut dan manis pas.",
-    imageUrl: "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=500&auto=format&fit=crop&q=80",
+    id: "104",
+    menuId: "104",
+    warungId: "1",
+    canteenId: 1,
+    canteenName: "Kantin Bu Siti",
+    name: "Es Teh Manis Jumbo",
+    nama: "Es Teh Manis Jumbo",
+    price: 4000,
+    harga: 4000,
+    description: "Teh seduh wangi melati asli dengan es batu segar melimpah dalam gelas ukuran jumbo 500ml.",
+    deskripsi: "Teh seduh wangi melati asli dengan es batu segar melimpah dalam gelas ukuran jumbo 500ml.",
+    imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500&auto=format&fit=crop&q=80",
+    gambar: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500&auto=format&fit=crop&q=80",
+    isAvailable: true,
+    rating: 4.9,
+    soldCount: 2890,
+    categoryId: "drinks",
+    kategori: "Minuman",
+    addOnGroups: [
+      {
+        id: "addon-manis-esteh",
+        judul: "Tingkat Manis",
+        tipe: "single",
+        required: false,
+        opsi: [
+          { id: "opt-teh-normal", nama: "Manis Normal", hargaTambahan: 0 },
+          { id: "opt-teh-sedang", nama: "Sedang / Less Sugar", hargaTambahan: 0 },
+          { id: "opt-teh-tawar", nama: "Tawar (Tanpa Gula)", hargaTambahan: 0 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "105",
+    menuId: "105",
+    warungId: "1",
+    canteenId: 1,
+    canteenName: "Kantin Bu Siti",
+    name: "Tempe Mendoan (3 pcs)",
+    nama: "Tempe Mendoan (3 pcs)",
+    price: 7000,
+    harga: 7000,
+    description: "Tempe kedelai berbalut adonan tepung gurih disajikan hangat dengan sambal kecap pedas.",
+    deskripsi: "Tempe kedelai berbalut adonan tepung gurih disajikan hangat dengan sambal kecap pedas.",
+    imageUrl: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&auto=format&fit=crop&q=80",
+    gambar: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&auto=format&fit=crop&q=80",
     isAvailable: true,
     rating: 4.8,
-    soldCount: 740,
-    categoryId: "drinks",
+    soldCount: 820,
+    categoryId: "snacks",
+    kategori: "Camilan",
+    addOnGroups: [],
   },
 ];
 

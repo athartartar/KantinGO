@@ -40,7 +40,28 @@ export function getLocalMenus(): Menu[] {
     setToStorage(MENUS_KEY, mockMenuList);
     return mockMenuList;
   }
-  return current;
+  const currentIds = new Set(current.map((m) => String(m.id)));
+  const missing = mockMenuList.filter((m) => !currentIds.has(String(m.id)));
+  let updated = current;
+  if (missing.length > 0) {
+    updated = [...current, ...missing];
+  }
+  // Pastikan menu Es Teh Manis Jumbo (104) sinkron addOnGroups
+  const item104Mock = mockMenuList.find((m) => String(m.id) === "104");
+  if (item104Mock) {
+    updated = updated.map((m) =>
+      String(m.id) === "104"
+        ? {
+            ...m,
+            addOnGroups: item104Mock.addOnGroups,
+          }
+        : m
+    );
+  }
+  if (updated !== current) {
+    setToStorage(MENUS_KEY, updated);
+  }
+  return updated;
 }
 
 export async function getMenus(): Promise<Menu[]> {

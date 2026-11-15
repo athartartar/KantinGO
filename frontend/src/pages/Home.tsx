@@ -30,8 +30,11 @@ export default function Home() {
         const warungs = await getWarungs();
         const canteenMap = new Map(warungs.map((w) => [String(w.id), w.name || w.nama || "Kantin"]));
 
-        return raw.map((item, index) => ({
-          id: typeof item.id === "number" ? item.id : index + 1,
+                return raw.map((item) => ({
+          ...item,
+          id: String(item.id),
+          menuId: String(item.id),
+          warungId: String(item.warungId || "1"),
           canteenId: Number(item.warungId) || 1,
           canteenName: canteenMap.get(String(item.warungId)) || item.canteenName || "Kantin #1",
           name: item.nama || item.name || "Menu",
@@ -40,14 +43,12 @@ export default function Home() {
           imageUrl:
             item.gambar ||
             item.imageUrl ||
-            mockPopularMenus.find(
-              (m) => (m.name || "").toLowerCase() === (item.nama || item.name || "").toLowerCase()
-            )?.imageUrl ||
             "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
           isAvailable: item.isAvailable ?? true,
           rating: item.rating ?? 4.8,
           soldCount: item.soldCount || 120,
           categoryId: item.categoryId || "heavy",
+          addOnGroups: item.addOnGroups || [],
         }));
       } catch {
         return mockPopularMenus;
