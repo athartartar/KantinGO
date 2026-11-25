@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CanteenController;
+use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\MenuController;
+use App\Http\Controllers\Api\V1\SearchController;
+use App\Http\Controllers\Api\V1\WarungController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -28,3 +33,18 @@ Route::prefix('auth')->group(function () {
         Route::put('/me/password', [AuthController::class, 'updatePassword']);
     });
 });
+
+Route::get('/canteens', [CanteenController::class, 'index']);
+Route::get('/canteens/{canteen}', [CanteenController::class, 'show']);
+
+Route::get('/categories', [CategoryController::class, 'index']);
+
+Route::get('/warungs', [WarungController::class, 'index']);
+Route::get('/warungs/{warung}', [WarungController::class, 'show']);
+Route::get('/warungs/{warung}/menus', [WarungController::class, 'menus']);
+Route::get('/warungs/{warung}/reviews', [WarungController::class, 'reviews']);
+
+Route::get('/menus/popular', [MenuController::class, 'popular']);
+Route::get('/menus/{menu}', [MenuController::class, 'show']);
+
+Route::get('/search', SearchController::class);
