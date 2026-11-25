@@ -1,12 +1,17 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdminPartnerController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CanteenController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\MenuController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\PartnerMenuAddonController;
+use App\Http\Controllers\Api\V1\PartnerMenuController;
+use App\Http\Controllers\Api\V1\PartnerOrderController;
 use App\Http\Controllers\Api\V1\PartnerWalletController;
+use App\Http\Controllers\Api\V1\PartnerWarungController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\SearchController;
@@ -85,8 +90,36 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::prefix('partner')->middleware(['auth:sanctum', 'approved.partner'])->group(function () {
+    Route::get('/warung', [PartnerWarungController::class, 'show']);
+    Route::put('/warung', [PartnerWarungController::class, 'update']);
+    Route::patch('/warung/open', [PartnerWarungController::class, 'toggleOpen']);
+    Route::get('/stats', [PartnerWarungController::class, 'stats']);
+
+    Route::get('/menus', [PartnerMenuController::class, 'index']);
+    Route::post('/menus', [PartnerMenuController::class, 'store']);
+    Route::get('/menus/{menu}', [PartnerMenuController::class, 'show']);
+    Route::put('/menus/{menu}', [PartnerMenuController::class, 'update']);
+    Route::patch('/menus/{menu}', [PartnerMenuController::class, 'update']);
+    Route::delete('/menus/{menu}', [PartnerMenuController::class, 'destroy']);
+
+    Route::get('/menus/{menu}/addons', [PartnerMenuAddonController::class, 'index']);
+    Route::post('/menus/{menu}/addons', [PartnerMenuAddonController::class, 'store']);
+    Route::put('/menus/{menu}/addons/{addon}', [PartnerMenuAddonController::class, 'update']);
+    Route::patch('/menus/{menu}/addons/{addon}', [PartnerMenuAddonController::class, 'update']);
+    Route::delete('/menus/{menu}/addons/{addon}', [PartnerMenuAddonController::class, 'destroy']);
+
+    Route::get('/orders', [PartnerOrderController::class, 'index']);
+    Route::patch('/orders/{order}/status', [PartnerOrderController::class, 'updateStatus']);
+
     Route::get('/wallet', [PartnerWalletController::class, 'show']);
     Route::put('/bank-account', [PartnerWalletController::class, 'updateBankAccount']);
     Route::post('/withdrawals', [PartnerWalletController::class, 'withdraw']);
     Route::get('/withdrawals', [PartnerWalletController::class, 'withdrawals']);
+});
+
+Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/partner-applications', [AdminPartnerController::class, 'index']);
+    Route::post('/partner-applications/{warung}/approve', [AdminPartnerController::class, 'approve']);
+    Route::post('/partner-applications/{warung}/reject', [AdminPartnerController::class, 'reject']);
+    Route::get('/wallet/summary', [AdminPartnerController::class, 'walletSummary']);
 });
