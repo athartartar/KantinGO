@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureApprovedPartner;
+use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -25,6 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
         $middleware->throttleApi();
+        $middleware->alias([
+            'role' => RoleMiddleware::class,
+            'approved.partner' => EnsureApprovedPartner::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
