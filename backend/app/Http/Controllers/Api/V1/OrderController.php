@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Events\OrderCompleted;
+use App\Events\OrderStatusChanged;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\StoreOrderRequest;
 use App\Http\Requests\Order\UpdateOrderStatusRequest;
@@ -221,6 +223,8 @@ class OrderController extends Controller
                     $discount = min($discount, $subtotal);
                     $voucherId = $voucher->id;
 
+                    $alreadyClaimed = $userVoucher !== null && $userVoucher->status === 'active';
+
                     UserVoucher::updateOrCreate(
                         [
                             'user_id' => $user->id,
@@ -233,7 +237,9 @@ class OrderController extends Controller
                         ]
                     );
 
-                    $voucher->increment('used_count');
+                    if (! $alreadyClaimed) {
+                        $voucher->increment('used_count');
+                    }
                 }
 
                 $serviceFee = Order::SERVICE_FEE;
@@ -331,6 +337,8 @@ class OrderController extends Controller
                 }
             }
 
+            OrderStatusChanged::dispatch($lockedOrder);
+
             return $lockedOrder->load(['warung', 'items', 'payment']);
         });
 
@@ -363,6 +371,8 @@ class OrderController extends Controller
 
             $lockedOrder->status = Order::STATUS_SIAP;
             $lockedOrder->save();
+
+            OrderStatusChanged::dispatch($lockedOrder);
 
             return $lockedOrder->load(['warung', 'items', 'payment']);
         });
@@ -397,6 +407,8 @@ class OrderController extends Controller
             $lockedOrder->save();
 
             $walletService->releaseOnOrderCompleted($lockedOrder);
+            OrderCompleted::dispatch($lockedOrder);
+            OrderStatusChanged::dispatch($lockedOrder);
 
             return $lockedOrder->load(['warung', 'items', 'payment']);
         });

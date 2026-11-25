@@ -4,10 +4,13 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CanteenController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\MenuController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PartnerWalletController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\SearchController;
+use App\Http\Controllers\Api\V1\VoucherController;
 use App\Http\Controllers\Api\V1\WarungController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +69,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{order}/confirm-pickup', [OrderController::class, 'confirmPickup']);
     Route::post('/orders/{order}/pay', [PaymentController::class, 'pay']);
     Route::get('/orders/{order}/payment', [PaymentController::class, 'status']);
+    Route::post('/orders/{order}/review', [ReviewController::class, 'store']);
+
+    Route::get('/vouchers', [VoucherController::class, 'index']);
+    Route::get('/me/vouchers', [VoucherController::class, 'myVouchers']);
+    Route::post('/vouchers/redeem', [VoucherController::class, 'redeem']);
+    Route::post('/vouchers/{voucher}/claim', [VoucherController::class, 'claim']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
+    Route::get('/me/reviews', [ReviewController::class, 'myReviews']);
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
 });
 
 Route::prefix('partner')->middleware(['auth:sanctum', 'approved.partner'])->group(function () {

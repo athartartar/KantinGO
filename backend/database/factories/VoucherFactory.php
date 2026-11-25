@@ -18,6 +18,7 @@ class VoucherFactory extends Factory
             'type' => 'nominal',
             'value' => 5000,
             'min_spend' => 15000,
+            'points_cost' => 100,
             'max_discount' => null,
             'quota' => 100,
             'used_count' => 0,
