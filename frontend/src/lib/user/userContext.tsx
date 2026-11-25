@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import type { Settings, User } from "./types";
+import { authApi, getUser as fetchUserApi, updateUser as updateUserApi } from "../api";
+import { isAuthenticated, isMockMode } from "../auth";
 
 const USER_STORAGE_KEY = "kantingo_user_v1";
 const SETTINGS_STORAGE_KEY = "kantingo_settings_v1";
@@ -62,6 +64,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   useEffect(() => {
+    if (!isMockMode() && isAuthenticated()) {
+      fetchUserApi()
+        .then((remoteUser) => setUser(remoteUser))
+        .catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
     } catch {}
@@ -79,6 +89,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateUser = useCallback((data: Partial<User>) => {
     setUser((prev) => ({ ...prev, ...data }));
+    if (!isMockMode() && isAuthenticated()) {
+      updateUserApi(data)
+        .then((updated) => setUser(updated))
+        .catch(() => {});
+    }
   }, []);
 
   const updateSettings = useCallback((data: Partial<Settings>) => {
@@ -86,6 +101,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const logout = useCallback(() => {
+    authApi.logout().catch(() => {});
     try {
       localStorage.removeItem(USER_STORAGE_KEY);
       localStorage.removeItem(SETTINGS_STORAGE_KEY);

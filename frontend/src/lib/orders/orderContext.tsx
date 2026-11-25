@@ -14,6 +14,13 @@ import type {
 import { addStoredReview } from "../mock/reviews";
 import { addNotificationToStorage } from "../notifications";
 
+import {
+  addReview as addReviewApi,
+  getOrders as getOrdersApi,
+  updateOrderStatus as updateOrderStatusApi,
+} from "../api";
+import { isAuthenticated, isMockMode } from "../auth";
+
 const ORDERS_STORAGE_KEY = "kantingo_orders_v1";
 const LEGACY_STORAGE_KEY = "kantingo_orders";
 
@@ -286,6 +293,16 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
     orders: getInitialOrders(),
   }));
 
+  useEffect(() => {
+    if (!isMockMode() && isAuthenticated()) {
+      getOrdersApi()
+        .then((remoteOrders) => {
+          dispatch({ type: "LOAD_ORDERS", payload: remoteOrders });
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   // Simpan ke localStorage saat order berubah
   useEffect(() => {
     try {
@@ -341,6 +358,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
   const completeOrder = useCallback(
     (orderId: string) => {
       updateStatus(orderId, "selesai");
+      if (!isMockMode() && isAuthenticated()) {
+        updateOrderStatusApi(orderId, "selesai").catch(() => {});
+      }
     },
     [updateStatus]
   );
@@ -387,7 +407,17 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       const order = state.orders.find((o) => o.id === orderId);
-      if (order) {
+      if (!isMockMode() && isAuthenticated()) {
+        addReviewApi({
+          id: `rev-${Date.now()}`,
+          warungId: order?.warungId || "",
+          namaUser: "Saya",
+          rating,
+          komentar,
+          tanggal: "Hari ini",
+          orderId,
+        }).catch(() => {});
+      } else if (order) {
         addStoredReview({
           id: `rev-${Date.now()}`,
           warungId: order.warungId,
@@ -421,6 +451,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Simulasi otomatis: order "diproses" berumur >30 detik otomatis jadi "siap"
   useEffect(() => {
+    if (!isMockMode()) return;
     const checkAutoAdvance = () => {
       const now = Date.now();
       state.orders.forEach((order) => {

@@ -165,11 +165,35 @@ export default function Checkout() {
   const handleProceedPayment = () => {
     if (items.length === 0) return;
 
-    // Simpan data order sementara ke state navigasi
+    const idempotencyKey =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `kgo-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    const pickupDate = new Date();
+    const targetTime =
+      selectedPill === 4 && customTime
+        ? customTime
+        : pillSlots.find((p) => p.id === selectedPill)?.time || formatOffsetTime(10);
+    const [hh, mm] = targetTime.split(":").map(Number);
+    pickupDate.setHours(hh || 12, mm || 0, 0, 0);
+    if (pickupDate.getTime() <= Date.now()) {
+      pickupDate.setDate(pickupDate.getDate() + 1);
+    }
+
+    const yyyy = pickupDate.getFullYear();
+    const mon = String(pickupDate.getMonth() + 1).padStart(2, "0");
+    const dd = String(pickupDate.getDate()).padStart(2, "0");
+    const hStr = String(pickupDate.getHours()).padStart(2, "0");
+    const mStr = String(pickupDate.getMinutes()).padStart(2, "0");
+    const pickupTimeValue = `${yyyy}-${mon}-${dd} ${hStr}:${mStr}:00`;
+
     navigate("/payment/qris", {
       state: {
         items,
         pickupTime: selectedPickupTimeDisplay,
+        pickupTimeValue,
+        idempotencyKey,
         voucher: selectedVoucher,
         total: grandTotal,
         subtotal,

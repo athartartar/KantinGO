@@ -32,8 +32,10 @@ import WarungProfile from "./pages/WarungProfile";
 import Checkout from "./pages/Checkout";
 import PaymentQris from "./pages/PaymentQris";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import MitraDashboard from "./pages/MitraDashboard";
 import Receipt from "./pages/Receipt";
 import Review from "./pages/Review";
+import SimulasiBayar from "./pages/SimulasiBayar";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -52,6 +54,15 @@ createRoot(document.getElementById("root")!).render(
                     {/* Halaman autentikasi (tanpa AppLayout) */}
                     <Route path="/splash" element={<SplashScreen />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/simulasi-bayar/:code" element={<SimulasiBayar />} />
+                    <Route
+                      path="/mitra"
+                      element={
+                        <RequireAuth role="warung_owner">
+                          <MitraDashboard />
+                        </RequireAuth>
+                      }
+                    />
 
                     {/* Halaman aplikasi yang memerlukan login */}
                     <Route

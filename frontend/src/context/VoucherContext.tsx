@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import type { VoucherItem } from "../lib/mock";
-import { getLocalVouchers, redeemVoucher as redeemVoucherApi } from "../lib/api";
+import { getLocalVouchers, getVouchers, redeemVoucher as redeemVoucherApi } from "../lib/api";
+import { isAuthenticated, isMockMode } from "../lib/auth";
 
 export interface RedeemResult {
   success: boolean;
@@ -30,11 +31,22 @@ export function VoucherProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
+  useEffect(() => {
+    if (!isMockMode() && isAuthenticated()) {
+      getVouchers()
+        .then((list) => setUserVouchers(list))
+        .catch(() => {});
+    }
+  }, []);
+
   const redeemVoucher = async (rawCode: string): Promise<RedeemResult> => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
     const result = await redeemVoucherApi(rawCode);
     if (result.success && result.voucher) {
-      setUserVouchers(getLocalVouchers());
+      if (!isMockMode() && isAuthenticated()) {
+        getVouchers().then(setUserVouchers).catch(() => {});
+      } else {
+        setUserVouchers(getLocalVouchers());
+      }
       try {
         const raw = localStorage.getItem("kantingo_redeemed_codes_v1");
         setRedeemedCodes(raw ? JSON.parse(raw) : []);

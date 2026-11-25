@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import type { AppNotification } from "./types";
+import { notificationsApi } from "../api";
+import { isAuthenticated, isMockMode } from "../auth";
 
 const STORAGE_KEY = "kantingo_notifications_v1";
 const SETTINGS_KEY = "kantingo_settings_v1";
@@ -65,6 +67,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isMockMode() && isAuthenticated()) {
+      notificationsApi.list().then(setNotifications).catch(() => {});
+    }
+  }, []);
+
   const unreadCount = notifications.filter((n) => !n.sudahDibaca).length;
 
   const addNotification = useCallback(
@@ -99,10 +107,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, sudahDibaca: true } : n))
     );
+    if (!isMockMode() && isAuthenticated()) {
+      notificationsApi.markAsRead(id).catch(() => {});
+    }
   }, []);
 
   const markAllAsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, sudahDibaca: true })));
+    if (!isMockMode() && isAuthenticated()) {
+      notificationsApi.markAllAsRead().catch(() => {});
+    }
   }, []);
 
   const clearAll = useCallback(() => {
