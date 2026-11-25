@@ -9,6 +9,8 @@ import React, {
 } from "react";
 import type { CartAddOn, CartItem, Menu } from "../mock/types";
 import { AlertTriangle } from "lucide-react";
+import { getWarungMenus } from "../api";
+import { isMockMode } from "../auth";
 
 const STORAGE_KEY = "kantingo_cart_state_v1";
 
@@ -38,7 +40,8 @@ type CartAction =
   | { type: "UPDATE_QTY"; payload: { itemId: string; qty: number } }
   | { type: "REMOVE_ITEM"; payload: { itemId: string } }
   | { type: "CLEAR_CART" }
-  | { type: "LOAD_STATE"; payload: CartState };
+  | { type: "LOAD_STATE"; payload: CartState }
+  | { type: "SYNC_VALIDATED_CART"; payload: CartItem[] };
 
 function areAddOnsEqual(a: CartAddOn[] = [], b: CartAddOn[] = []): boolean {
   if (a.length !== b.length) return false;
@@ -165,6 +168,15 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         warungNama: null,
       };
 
+    case "SYNC_VALIDATED_CART": {
+      const validItems = action.payload;
+      return {
+        items: validItems,
+        warungId: validItems.length === 0 ? null : state.warungId,
+        warungNama: validItems.length === 0 ? null : state.warungNama,
+      };
+    }
+
     default:
       return state;
   }
@@ -227,6 +239,35 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {}
   }, [state]);
+
+  useEffect(() => {
+    if (isMockMode() || state.items.length === 0 || !state.warungId) return;
+    let active = true;
+    getWarungMenus(state.warungId)
+      .then((apiMenus) => {
+        if (!active) return;
+        const menuMap = new Map(
+          apiMenus.filter((m) => m.isAvailable !== false).map((m) => [String(m.id), m])
+        );
+        const validated = state.items
+          .filter((item) => menuMap.has(String(item.menuId)))
+          .map((item) => {
+            const freshMenu = menuMap.get(String(item.menuId))!;
+            return {
+              ...item,
+              hargaSatuan: freshMenu.harga,
+              menu: freshMenu,
+            };
+          });
+        if (validated.length !== state.items.length) {
+          dispatch({ type: "SYNC_VALIDATED_CART", payload: validated });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const totalItem = useMemo(() => {
     return state.items.reduce((acc, item) => acc + item.jumlah, 0);

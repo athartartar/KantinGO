@@ -104,7 +104,7 @@ export default function Status() {
       return "Pesanan Makanan";
     }
     const first = order.items[0];
-    const firstText = `${first.nama} x${first.jumlah}`;
+    const firstText = `${first.nama || first.menu?.nama || "Menu"} x${first.jumlah}`;
     if (order.items.length > 1) {
       const remainingCount = order.items.length - 1;
       return `${firstText}, +${remainingCount} lainnya`;

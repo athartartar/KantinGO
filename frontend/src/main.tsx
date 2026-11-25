@@ -10,6 +10,7 @@ import { NotificationProvider } from "./lib/notifications";
 import { getDefaultHomeForUser, isAuthenticated } from "./lib/auth";
 import AppLayout from "./components/AppLayout";
 import AppSplashWrapper from "./components/AppSplashWrapper";
+import ErrorBoundary from "./components/ErrorBoundary";
 import RequireAuth, { GuestOnly } from "./components/RequireAuth";
 import Home from "./pages/Home";
 import SplashScreen from "./pages/SplashScreen";
@@ -49,7 +50,8 @@ const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
       <CartProvider>
         <OrderProvider>
           <NotificationProvider>
@@ -217,5 +219,6 @@ createRoot(document.getElementById("root")!).render(
         </OrderProvider>
       </CartProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>
 );

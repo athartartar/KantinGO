@@ -163,6 +163,10 @@ export default function PaymentQris() {
     return () => clearInterval(poller);
   }, [backendOrderId, backendOrderCode, paymentStatus, navigate, orderState, clearCart]);
 
+  if (!orderState || !orderState.total) {
+    return null;
+  }
+
   const isExpired =
     paymentStatus === "expired" ||
     (paymentStatus === "pending" && expiresAt !== null && timeLeft !== null && timeLeft <= 0);

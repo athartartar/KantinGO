@@ -5,13 +5,14 @@ import {
   Check,
   Clock,
   Receipt,
+  RefreshCw,
   ShoppingBag,
   Store,
   Tag,
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import QtyStepper from "../components/QtyStepper";
@@ -32,11 +33,27 @@ export default function Checkout() {
     subtotal,
   } = useCart();
 
-  const { data: warung } = useQuery({
+  const {
+    data: warung,
+    isLoading: isWarungLoading,
+    isError: isWarungError,
+    refetch: refetchWarung,
+  } = useQuery({
     queryKey: ["warung", cartWarungId],
     queryFn: () => getWarungById(cartWarungId!),
     enabled: Boolean(cartWarungId),
   });
+
+  useEffect(() => {
+    if (items.length === 0) {
+      navigate("/cart", {
+        replace: true,
+        state: {
+          message: "Keranjangmu masih kosong. Silakan pilih menu terlebih dahulu.",
+        },
+      });
+    }
+  }, [items.length, navigate]);
 
   const { data: rawVouchers = [] } = useQuery({
     queryKey: ["available-vouchers"],
@@ -113,7 +130,7 @@ export default function Checkout() {
     }
 
     // 2. Validasi: dalam jam buka warung (misal "08:00 - 17:00")
-    const warungJamBuka = warung.jamBuka || "08:00 - 17:00";
+    const warungJamBuka = warung?.jamBuka || "08:00 - 17:00";
     const [openStr, closeStr] = warungJamBuka.split("-").map((s) => s.trim());
     if (openStr && closeStr) {
       const [openH, openM] = openStr.split(":").map(Number);
@@ -216,7 +233,7 @@ export default function Checkout() {
         subtotal,
         discountAmount,
         serviceFee,
-        warungNama: warungNama || warung.nama || warung.name || "Kantin Kampus",
+        warungNama: warungNama || warung?.nama || warung?.name || "Kantin Kampus",
         warungId: cartWarungId,
         totalItem,
       },
@@ -257,12 +274,55 @@ export default function Checkout() {
     );
   }
 
+  if (items.length > 0 && isWarungLoading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6">
+        <PageHeader title="Checkout" backTo="/cart" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-7 space-y-6">
+            <div className="h-20 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+            <div className="h-56 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+            <div className="h-40 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+          </div>
+          <div className="lg:col-span-5 h-64 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length > 0 && isWarungError) {
+    return (
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-16 space-y-6">
+        <PageHeader title="Checkout" backTo="/cart" />
+        <div className="bg-white border border-rose-100 rounded-3xl p-8 md:p-12 text-center space-y-4 shadow-soft max-w-md mx-auto">
+          <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-8 h-8 stroke-[2]" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-bold text-navy">Gagal Memuat Data Checkout</h2>
+            <p className="text-sm text-navy/60">
+              Terjadi kendala saat mengambil informasi warung dari server.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => refetchWarung()}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-blue-bright text-white text-sm font-bold rounded-full shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Coba Lagi</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6 pb-28 lg:pb-12">
       {/* 1. Header back + judul "Checkout" */}
       <PageHeader
         title="Checkout"
-        subtitle={`Pesanan dari ${warungNama || warung.nama || "Kantin Mitra"}`}
+        subtitle={`Pesanan dari ${warungNama || warung?.nama || warung?.name || "Kantin Mitra"}`}
         backTo={cartWarungId ? `/warung/${cartWarungId}` : "/warung"}
       />
 
@@ -283,7 +343,7 @@ export default function Checkout() {
                   Mitra Kantin
                 </span>
                 <h2 className="text-base font-bold text-white line-clamp-1">
-                  {warungNama || warung.nama || "Kantin Kampus"}
+                  {warungNama || warung?.nama || warung?.name || "Kantin Kampus"}
                 </h2>
               </div>
             </div>
@@ -322,6 +382,10 @@ export default function Checkout() {
                       <img
                         src={itemImage}
                         alt={item.menu?.nama || "Menu"}
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80";
+                        }}
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />
@@ -405,7 +469,7 @@ export default function Checkout() {
                 </h3>
               </div>
               <span className="text-xs font-semibold text-navy/50">
-                Jam buka: {warung.jamBuka || "08:00 - 17:00"}
+                Jam buka: {warung?.jamBuka || "08:00 - 17:00"}
               </span>
             </div>
 
@@ -640,7 +704,7 @@ export default function Checkout() {
             </div>
 
             <p className="text-xs text-navy/70 leading-relaxed">
-              Pilih waktu pengambilan. Minimal 10 menit dari waktu sekarang dan berada dalam jam operasional warung (<strong>{warung.jamBuka || "08:00 - 17:00"}</strong>).
+              Pilih waktu pengambilan. Minimal 10 menit dari waktu sekarang dan berada dalam jam operasional warung (<strong>{warung?.jamBuka || "08:00 - 17:00"}</strong>).
             </p>
 
             <div className="space-y-2">

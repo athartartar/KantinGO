@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Check,
+  RefreshCw,
   ShoppingBag,
   Store,
 } from "lucide-react";
@@ -16,19 +17,26 @@ import type { CartAddOn } from "../lib/mock/types";
 
 export default function MenuDetail() {
   const { warungId, menuId } = useParams<{ warungId: string; menuId: string }>();
+  const parsedWarungId = warungId ? String(warungId).trim() : "";
+  const parsedMenuId = menuId ? String(menuId).trim() : "";
   const navigate = useNavigate();
   const { addItem } = useCart();
 
-  const { data: menu, isLoading: isMenuLoading } = useQuery({
-    queryKey: ["menu", menuId],
-    queryFn: () => getMenuById(menuId!),
-    enabled: Boolean(menuId),
+  const {
+    data: menu,
+    isLoading: isMenuLoading,
+    isError: isMenuError,
+    refetch: refetchMenu,
+  } = useQuery({
+    queryKey: ["menu", parsedMenuId],
+    queryFn: () => getMenuById(parsedMenuId),
+    enabled: Boolean(parsedMenuId),
   });
 
-  const resolvedWarungId = menu?.warungId || warungId;
+  const resolvedWarungId = menu?.warungId || parsedWarungId;
   const { data: warung } = useQuery({
     queryKey: ["warung", resolvedWarungId],
-    queryFn: () => getWarungById(resolvedWarungId!),
+    queryFn: () => getWarungById(resolvedWarungId),
     enabled: Boolean(resolvedWarungId),
   });
 
@@ -42,7 +50,7 @@ export default function MenuDetail() {
     if (!menu?.addOnGroups) return;
     setSingleSelections((prev) => {
       const next = { ...prev };
-      menu.addOnGroups.forEach((group: any) => {
+      (menu.addOnGroups || []).forEach((group: any) => {
         const opts = group.opsi || group.options || [];
         const tipe = group.tipe || group.type;
         if (tipe === "single" && opts.length > 0 && !next[group.id]) {
@@ -69,6 +77,27 @@ export default function MenuDetail() {
   // State toast notifikasi
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Hitung total harga tambahan dari seluruh add-on yang dipilih (harus sebelum early return)
+  const addOnsTotal = useMemo(() => {
+    if (!menu?.addOnGroups) return 0;
+    let total = 0;
+    menu.addOnGroups.forEach((group) => {
+      const opts = group.opsi || [];
+      if (group.tipe === "single") {
+        const selectedOptId = singleSelections[group.id];
+        const opt = opts.find((o) => o.id === selectedOptId);
+        if (opt) total += opt.hargaTambahan;
+      } else {
+        opts.forEach((opt) => {
+          if (multiSelections[opt.id]) {
+            total += opt.hargaTambahan;
+          }
+        });
+      }
+    });
+    return total;
+  }, [menu, singleSelections, multiSelections]);
+
   if (isMenuLoading) {
     return (
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8">
@@ -80,7 +109,41 @@ export default function MenuDetail() {
     );
   }
 
-  if (!menu) {
+  if (isMenuError) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center p-4 bg-surface text-navy">
+        <div className="bg-white rounded-3xl p-8 text-center space-y-4 max-w-sm w-full shadow-soft border border-rose-100">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
+          <h2 className="text-xl font-bold text-navy">Gagal Memuat Menu</h2>
+          <p className="text-sm text-navy/60">
+            Terjadi kendala saat mengambil detail menu dari server.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={() => refetchMenu()}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:bg-blue-bright transition-all cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Coba Lagi</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(parsedWarungId ? `/warung/${parsedWarungId}` : "/warung")}
+              className="flex-1 px-5 py-2.5 border border-slate-200 text-navy text-sm font-semibold rounded-full hover:bg-slate-50 transition-all cursor-pointer"
+            >
+              Kembali
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isWarungMismatch =
+    Boolean(menu && parsedWarungId) && String(menu?.warungId) !== parsedWarungId;
+
+  if (!menu || isWarungMismatch) {
     return (
       <div className="min-h-dvh flex items-center justify-center p-4 bg-surface text-navy">
         <div className="bg-white rounded-3xl p-8 text-center space-y-4 max-w-sm w-full shadow-soft border border-blue-100">
@@ -90,8 +153,8 @@ export default function MenuDetail() {
           </p>
           <button
             type="button"
-            onClick={() => navigate(warungId ? `/warung/${warungId}` : "/warung")}
-            className="px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:bg-blue-bright transition-all"
+            onClick={() => navigate(parsedWarungId ? `/warung/${parsedWarungId}` : "/warung")}
+            className="px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:bg-blue-bright transition-all cursor-pointer"
           >
             Kembali ke Warung
           </button>
@@ -99,25 +162,6 @@ export default function MenuDetail() {
       </div>
     );
   }
-
-  // Hitung total harga tambahan dari seluruh add-on yang dipilih
-  const addOnsTotal = useMemo(() => {
-    let total = 0;
-    menu.addOnGroups.forEach((group) => {
-      if (group.tipe === "single") {
-        const selectedOptId = singleSelections[group.id];
-        const opt = group.opsi.find((o) => o.id === selectedOptId);
-        if (opt) total += opt.hargaTambahan;
-      } else {
-        group.opsi.forEach((opt) => {
-          if (multiSelections[opt.id]) {
-            total += opt.hargaTambahan;
-          }
-        });
-      }
-    });
-    return total;
-  }, [menu.addOnGroups, singleSelections, multiSelections]);
 
   const unitPrice = menu.harga + addOnsTotal;
   const totalPrice = unitPrice * qty;

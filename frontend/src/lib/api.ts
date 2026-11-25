@@ -53,65 +53,88 @@ export function resolveImageUrl(path?: string | null): string {
 }
 
 function mapMenuFromApi(raw: any): Menu {
-  const addOnGroups = Array.isArray(raw.addon_groups)
+  const addOnGroups = Array.isArray(raw?.addon_groups)
     ? raw.addon_groups.map((g: any) => {
-        const mappedOptions = Array.isArray(g.options)
-          ? g.options.map((o: any) => ({
-              id: String(o.id),
-              name: o.option_name || o.name,
-              nama: o.option_name || o.name,
-              additionalPrice: Number(o.additional_price ?? 0),
-              hargaTambahan: Number(o.additional_price ?? 0),
-            }))
+        const mappedOptions = Array.isArray(g?.options)
+          ? g.options.map((o: any) => {
+              const addPrice = Math.round(Number(o?.additional_price ?? 0));
+              const optName = String(o?.option_name || o?.name || "");
+              return {
+                id: String(o?.id ?? ""),
+                name: optName,
+                nama: optName,
+                additionalPrice: addPrice,
+                hargaTambahan: addPrice,
+              };
+            })
           : [];
+        const groupTitle = String(g?.group_title || g?.title || "");
+        const groupType: "single" | "multiple" =
+          g?.selection_type === "multiple" ? "multiple" : "single";
         return {
-          id: g.group_key || g.id,
-          title: g.group_title || g.title,
-          judul: g.group_title || g.title,
-          type: g.selection_type === "multiple" ? "multiple" : "single",
-          tipe: g.selection_type === "multiple" ? "multiple" : "single",
-          required: Boolean(g.is_required),
+          id: String(g?.group_key || g?.id || ""),
+          title: groupTitle,
+          judul: groupTitle,
+          type: groupType,
+          tipe: groupType,
+          required: Boolean(g?.is_required),
           options: mappedOptions,
           opsi: mappedOptions,
         };
       })
     : [];
 
+  const priceInt = Math.round(Number(raw?.price ?? 0));
+  const resolvedImg = resolveImageUrl(raw?.image_path);
+  const categoryName = String(raw?.category?.name || raw?.category?.slug || "Makanan");
+
   return {
-    id: String(raw.id),
-    warungId: String(raw.warung_id),
-    categoryId: raw.category?.slug || String(raw.category_id || "heavy"),
-    kategori: raw.category?.name || raw.category?.slug || "Makanan",
-    name: raw.name,
-    nama: raw.name,
-    description: raw.description || "",
-    deskripsi: raw.description || "",
-    price: Number(raw.price ?? 0),
-    harga: Number(raw.price ?? 0),
-    imageUrl: resolveImageUrl(raw.image_path),
-    gambar: resolveImageUrl(raw.image_path),
-    isAvailable: Boolean(raw.is_available ?? true),
-    rating: Number(raw.rating_avg ?? 4.8),
-    soldCount: Number(raw.sold_count ?? 0),
+    id: String(raw?.id ?? ""),
+    warungId: String(raw?.warung_id ?? raw?.warung?.id ?? ""),
+    categoryId: String(raw?.category?.slug || raw?.category_id || "heavy"),
+    kategori: categoryName,
+    name: String(raw?.name || "Menu"),
+    nama: String(raw?.name || "Menu"),
+    description: String(raw?.description || ""),
+    deskripsi: String(raw?.description || ""),
+    price: priceInt,
+    harga: priceInt,
+    imageUrl: resolvedImg,
+    gambar: resolvedImg,
+    isAvailable: Boolean(raw?.is_available ?? true),
+    rating: Number(raw?.rating_avg ?? 4.8),
+    soldCount: Number(raw?.sold_count ?? 0),
+    canteenName: raw?.warung?.name ? String(raw.warung.name) : undefined,
     addOnGroups,
   };
 }
 
 function mapWarungFromApi(raw: any): Warung {
+  const categories = Array.isArray(raw?.categories)
+    ? raw.categories.map((c: any) => String(c?.name || c))
+    : [];
+  const ratingVal = Number(raw?.rating_avg ?? 4.8);
+  const reviewVal = Number(raw?.review_count ?? 0);
+
   return {
-    id: String(raw.id),
-    name: raw.name,
-    nama: raw.name,
-    slug: raw.slug,
-    description: raw.description || "",
-    location: raw.location || raw.canteen?.name || "Kantin Kampus",
-    jamBuka: raw.opening_hours || "08:00 - 17:00",
-    openingHours: raw.opening_hours || "08:00 - 17:00",
-    logo: resolveImageUrl(raw.logo_path),
-    estimatedMinutes: Number(raw.estimated_minutes ?? 10),
-    rating: Number(raw.rating_avg ?? 4.8),
-    reviewCount: Number(raw.review_count ?? 0),
-    isOpen: Boolean(raw.is_open ?? true),
+    id: String(raw?.id ?? ""),
+    name: String(raw?.name || "Warung Kantin"),
+    nama: String(raw?.name || "Warung Kantin"),
+    slug: raw?.slug ? String(raw.slug) : undefined,
+    description: String(raw?.description || ""),
+    deskripsi: String(raw?.description || ""),
+    location: String(raw?.location || raw?.canteen?.name || "Kantin Kampus"),
+    jamBuka: String(raw?.opening_hours || "08:00 - 17:00"),
+    openingHours: String(raw?.opening_hours || "08:00 - 17:00"),
+    logo: resolveImageUrl(raw?.logo_path),
+    estimatedMinutes: Number(raw?.estimated_minutes ?? 10),
+    rating: ratingVal,
+    ratingRataRata: ratingVal,
+    reviewCount: reviewVal,
+    jumlahUlasan: reviewVal,
+    categories,
+    kategori: categories,
+    isOpen: Boolean(raw?.is_open ?? true),
   };
 }
 
@@ -134,6 +157,8 @@ function mapOrderFromApi(raw: any): Order {
           id: String(it.id),
           menuId: String(it.menu_id),
           warungId: String(raw.warung_id),
+          nama: it.menu_name,
+          gambar: resolveImageUrl(it.menu_image),
           jumlah: Number(it.quantity ?? 1),
           quantity: Number(it.quantity ?? 1),
           hargaSatuan: Number(it.unit_price ?? 0),
@@ -142,7 +167,9 @@ function mapOrderFromApi(raw: any): Order {
             ? it.addons_snapshot.map((a: any) => ({
                 optionId: String(a.id),
                 name: a.option_name,
+                nama: a.option_name,
                 additionalPrice: Number(a.additional_price ?? 0),
+                hargaTambahan: Number(a.additional_price ?? 0),
               }))
             : [],
           menu: {
@@ -152,8 +179,8 @@ function mapOrderFromApi(raw: any): Order {
             nama: it.menu_name,
             price: Number(it.unit_price ?? 0),
             harga: Number(it.unit_price ?? 0),
-            imageUrl: it.menu_image || "",
-            gambar: it.menu_image || "",
+            imageUrl: resolveImageUrl(it.menu_image),
+            gambar: resolveImageUrl(it.menu_image),
             isAvailable: true,
           },
         }))

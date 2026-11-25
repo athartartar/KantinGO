@@ -1,5 +1,5 @@
-import { ArrowRight, ShoppingBag, Trash2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { AlertCircle, ArrowRight, ShoppingBag, Trash2 } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import QtyStepper from "../components/QtyStepper";
 import { useCart } from "../lib/cart";
@@ -7,6 +7,8 @@ import { formatRupiah } from "../lib/format";
 
 export default function Cart() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectMessage = (location.state as { message?: string } | null)?.message;
   const { items, warungNama, updateQty, removeItem, totalItem, subtotal, clearCart } =
     useCart();
 
@@ -14,6 +16,13 @@ export default function Cart() {
     return (
       <div className="w-full max-w-4xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 space-y-6">
         <PageHeader title="Keranjang Belanja" backTo="/" />
+
+        {redirectMessage && (
+          <div className="max-w-md mx-auto bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{redirectMessage}</span>
+          </div>
+        )}
 
         <div className="bg-white border border-blue-100 rounded-3xl p-10 md:p-14 text-center space-y-4 shadow-soft max-w-md mx-auto">
           <div className="w-16 h-16 rounded-full bg-surface text-primary flex items-center justify-center mx-auto">
