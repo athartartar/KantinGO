@@ -114,6 +114,7 @@ interface OrderContextValue {
   submitReview: (orderId: string, rating: number, komentar: string) => void;
   ordersByStatus: (status: OrderStatus) => Order[];
   getOrder: (id: string) => Order | undefined;
+  clearOrders: () => void;
 }
 
 const OrderContext = createContext<OrderContextValue | undefined>(undefined);
@@ -449,6 +450,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
     [state.orders]
   );
 
+  const clearOrders = useCallback(() => {
+    dispatch({ type: "LOAD_ORDERS", payload: [] });
+    try {
+      localStorage.removeItem(ORDERS_STORAGE_KEY);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {}
+  }, []);
+
   // Simulasi otomatis: order "diproses" berumur >30 detik otomatis jadi "siap"
   useEffect(() => {
     if (!isMockMode()) return;
@@ -509,6 +518,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
         submitReview,
         ordersByStatus,
         getOrder,
+        clearOrders,
       }}
     >
       {children}

@@ -7,13 +7,14 @@ import { VoucherProvider } from "./context/VoucherContext";
 import { OrderProvider } from "./lib/orders";
 import { UserProvider } from "./lib/user";
 import { NotificationProvider } from "./lib/notifications";
-import { isAuthenticated } from "./lib/auth";
+import { getDefaultHomeForUser, isAuthenticated } from "./lib/auth";
 import AppLayout from "./components/AppLayout";
 import AppSplashWrapper from "./components/AppSplashWrapper";
-import RequireAuth from "./components/RequireAuth";
+import RequireAuth, { GuestOnly } from "./components/RequireAuth";
 import Home from "./pages/Home";
 import SplashScreen from "./pages/SplashScreen";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Voucher from "./pages/Voucher";
 import VoucherSaya from "./pages/VoucherSaya";
 import Cart from "./pages/Cart";
@@ -32,7 +33,13 @@ import WarungProfile from "./pages/WarungProfile";
 import Checkout from "./pages/Checkout";
 import PaymentQris from "./pages/PaymentQris";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
-import MitraDashboard from "./pages/MitraDashboard";
+import PartnerLayout from "./components/partner/PartnerLayout";
+import PartnerDashboard from "./pages/partner/PartnerDashboard";
+import PartnerOrders from "./pages/partner/PartnerOrders";
+import PartnerMenus from "./pages/partner/PartnerMenus";
+import PartnerWallet from "./pages/partner/PartnerWallet";
+import PartnerWarung from "./pages/partner/PartnerWarung";
+import PartnerPending from "./pages/PartnerPending";
 import Receipt from "./pages/Receipt";
 import Review from "./pages/Review";
 import SimulasiBayar from "./pages/SimulasiBayar";
@@ -53,16 +60,45 @@ createRoot(document.getElementById("root")!).render(
                   <Routes>
                     {/* Halaman autentikasi (tanpa AppLayout) */}
                     <Route path="/splash" element={<SplashScreen />} />
-                    <Route path="/login" element={<Login />} />
+                    <Route
+                      path="/login"
+                      element={
+                        <GuestOnly>
+                          <Login />
+                        </GuestOnly>
+                      }
+                    />
+                    <Route
+                      path="/register"
+                      element={
+                        <GuestOnly>
+                          <Register />
+                        </GuestOnly>
+                      }
+                    />
                     <Route path="/simulasi-bayar/:code" element={<SimulasiBayar />} />
+                    <Route
+                      path="/mitra/menunggu"
+                      element={
+                        <RequireAuth role="warung_owner" allowPending>
+                          <PartnerPending />
+                        </RequireAuth>
+                      }
+                    />
                     <Route
                       path="/mitra"
                       element={
                         <RequireAuth role="warung_owner">
-                          <MitraDashboard />
+                          <PartnerLayout />
                         </RequireAuth>
                       }
-                    />
+                    >
+                      <Route index element={<PartnerDashboard />} />
+                      <Route path="pesanan" element={<PartnerOrders />} />
+                      <Route path="menu" element={<PartnerMenus />} />
+                      <Route path="dompet" element={<PartnerWallet />} />
+                      <Route path="warung" element={<PartnerWarung />} />
+                    </Route>
 
                     {/* Halaman aplikasi yang memerlukan login */}
                     <Route
@@ -127,7 +163,7 @@ createRoot(document.getElementById("root")!).render(
                       path="*"
                       element={
                         <Navigate
-                          to={isAuthenticated() ? "/" : "/login"}
+                          to={isAuthenticated() ? getDefaultHomeForUser() : "/login"}
                           replace
                         />
                       }

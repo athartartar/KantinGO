@@ -21,16 +21,19 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
 import { useUser } from "../lib/user";
+import { useVoucher } from "../context/VoucherContext";
 import { useNotifications } from "../lib/notifications";
-import { logout as authLogout } from "../lib/auth";
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, settings, updateSettings, logout } = useUser();
-  const { orders } = useOrders();
-  const { unreadCount } = useNotifications();
+  const { clearCart } = useCart();
+  const { orders, clearOrders } = useOrders();
+  const { clearVouchers } = useVoucher();
+  const { unreadCount, clearAll: clearNotifications } = useNotifications();
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -46,8 +49,11 @@ export default function Profile() {
   const handleConfirmLogout = () => {
     setIsLogoutModalOpen(false);
     logout();
-    authLogout(); // Bersihkan token autentikasi
-    navigate("/login");
+    clearCart();
+    clearOrders();
+    clearVouchers();
+    clearNotifications();
+    navigate("/login", { replace: true });
   };
 
   return (

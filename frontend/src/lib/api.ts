@@ -65,6 +65,7 @@ function mapMenuFromApi(raw: any): Menu {
     id: String(raw.id),
     warungId: String(raw.warung_id),
     categoryId: raw.category?.slug || String(raw.category_id || "heavy"),
+    kategori: raw.category?.name || raw.category?.slug || "Makanan",
     name: raw.name,
     nama: raw.name,
     description: raw.description || "",
@@ -104,7 +105,7 @@ function mapOrderFromApi(raw: any): Order {
     diproses: "diproses",
     siap: "siap",
     selesai: "selesai",
-    dibatalkan: "dibatalkan",
+    dibatalkan: "selesai",
   };
 
   return {
@@ -166,7 +167,7 @@ function mapUserVoucherFromApi(raw: any): VoucherItem {
     code: v.code,
     title: v.title,
     discount,
-    minOrder: Number(v.min_spend ?? 0),
+    minSpend: Number(v.min_spend ?? 0),
     status: raw.status === "used" ? "used" : raw.status === "expired" ? "expired" : "active",
     validUntil: v.valid_until || "",
   };
@@ -420,13 +421,13 @@ export async function createOrder(
   return mapOrderFromApi(res.data);
 }
 
-export async function updateOrderStatus(id: string, status: OrderStatus): Promise<Order | null> {
+export async function updateOrderStatus(id: string, status: OrderStatus | "dibatalkan"): Promise<Order | null> {
   if (isMockMode() || !isAuthenticated()) {
     const orders = getLocalOrders();
     let found: Order | null = null;
     const updated = orders.map((o) => {
       if (o.id === id) {
-        found = { ...o, status };
+        found = { ...o, status: status === "dibatalkan" ? "selesai" : status };
         return found;
       }
       return o;
@@ -828,9 +829,38 @@ export const notificationsApi = {
   },
 };
 
+export const categoriesApi = {
+  async list(): Promise<Array<{ id: number; name: string; slug: string }>> {
+    const res = await apiFetch<{ data: Array<{ id: number; name: string; slug: string }> }>("/categories", {
+      skipAuthRedirect: true,
+    });
+    return res.data || [];
+  },
+};
+
+export interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
 export const partnerApi = {
   async getWarung() {
     const res = await apiFetch<{ data: any }>("/partner/warung");
+    return res.data;
+  },
+  async updateWarung(payload: {
+    name: string;
+    description?: string | null;
+    location?: string | null;
+    opening_hours?: string | null;
+    estimated_minutes?: number;
+  }) {
+    const res = await apiFetch<{ data: any }>("/partner/warung", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
     return res.data;
   },
   async toggleOpen(isOpen: boolean) {
@@ -851,9 +881,13 @@ export const partnerApi = {
     }>("/partner/stats");
     return res.data;
   },
-  async getOrders() {
-    const res = await apiFetch<{ data: any[] }>("/partner/orders");
-    return res.data || [];
+  async getOrders(status?: string, page = 1) {
+    const params = new URLSearchParams({ page: String(page), per_page: "20" });
+    if (status) params.set("status", status);
+    const res = await apiFetch<{ data: any[]; meta?: PaginationMeta }>(
+      `/partner/orders?${params.toString()}`
+    );
+    return { items: res.data || [], meta: res.meta };
   },
   async updateOrderStatus(orderId: number | string, status: string) {
     const res = await apiFetch<{ data: any }>(`/partner/orders/${orderId}/status`, {
@@ -861,6 +895,110 @@ export const partnerApi = {
       body: JSON.stringify({ status }),
     });
     return res.data;
+  },
+  async getMenus(page = 1) {
+    const res = await apiFetch<{ data: any[]; meta?: PaginationMeta }>(
+      `/partner/menus?page=${page}&per_page=30`
+    );
+    return { items: res.data || [], meta: res.meta };
+  },
+  async createMenu(formData: FormData) {
+    const res = await apiFetch<{ data: any }>("/partner/menus", {
+      method: "POST",
+      body: formData,
+    });
+    return res.data;
+  },
+  async updateMenu(menuId: number | string, payload: FormData | Record<string, any>) {
+    if (payload instanceof FormData) {
+      payload.append("_method", "PATCH");
+      const res = await apiFetch<{ data: any }>(`/partner/menus/${menuId}`, {
+        method: "POST",
+        body: payload,
+      });
+      return res.data;
+    }
+    const res = await apiFetch<{ data: any }>(`/partner/menus/${menuId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  },
+  async deleteMenu(menuId: number | string) {
+    await apiFetch(`/partner/menus/${menuId}`, { method: "DELETE" });
+  },
+  async getMenuAddons(menuId: number | string) {
+    const res = await apiFetch<{ data: any[] }>(`/partner/menus/${menuId}/addons`);
+    return res.data || [];
+  },
+  async createMenuAddon(
+    menuId: number | string,
+    payload: {
+      group_key: string;
+      group_title: string;
+      selection_type: "single" | "multiple";
+      is_required?: boolean;
+      option_name: string;
+      additional_price: number;
+      is_available?: boolean;
+      sort_order?: number;
+    }
+  ) {
+    const res = await apiFetch<{ data: any }>(`/partner/menus/${menuId}/addons`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  },
+  async deleteMenuAddon(menuId: number | string, addonId: number | string) {
+    await apiFetch(`/partner/menus/${menuId}/addons/${addonId}`, { method: "DELETE" });
+  },
+  async getWallet(page = 1) {
+    const res = await apiFetch<{
+      data: {
+        pending_balance: number;
+        available_balance: number;
+        bank_account: {
+          bank_name: string;
+          account_holder: string;
+          account_number_masked: string;
+        } | null;
+        transactions: any[];
+      };
+      meta: PaginationMeta;
+    }>(`/partner/wallet?page=${page}&per_page=10`);
+    return { ...res.data, meta: res.meta };
+  },
+  async updateBankAccount(payload: {
+    bank_name: string;
+    account_holder: string;
+    account_number: string;
+  }) {
+    const res = await apiFetch<{
+      data: {
+        bank_name: string;
+        account_holder: string;
+        account_number_masked: string;
+      };
+    }>("/partner/bank-account", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  },
+  async withdraw(amount: number, idempotencyKey: string) {
+    const res = await apiFetch<{ data: any; message: string }>("/partner/withdrawals", {
+      method: "POST",
+      idempotencyKey,
+      body: JSON.stringify({ amount }),
+    });
+    return res.data;
+  },
+  async getWithdrawals(page = 1) {
+    const res = await apiFetch<{ data: any[]; meta: PaginationMeta }>(
+      `/partner/withdrawals?page=${page}&per_page=10`
+    );
+    return { items: res.data || [], meta: res.meta };
   },
 };
 

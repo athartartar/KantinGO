@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated } from "../lib/auth";
+import { getDefaultHomeForUser, isAuthenticated } from "../lib/auth";
 import logoUrl from "../../logo_KantinGO.png";
 
 interface SplashScreenProps {
@@ -29,7 +29,7 @@ export default function SplashScreen({
         if (onFinish) {
           onFinish();
         } else if (isAuthenticated()) {
-          navigate("/", { replace: true });
+          navigate(getDefaultHomeForUser(), { replace: true });
         } else {
           navigate("/login", { replace: true });
         }

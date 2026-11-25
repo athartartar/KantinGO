@@ -25,7 +25,7 @@ export default function MitraDashboard() {
       if (me.warung?.status === "approved") {
         const [st, ord] = await Promise.all([partnerApi.getStats(), partnerApi.getOrders()]);
         setStats(st);
-        setOrders(ord);
+        setOrders(ord.items || []);
       }
     } catch {
     } finally {

@@ -35,14 +35,17 @@ export interface Menu {
 
 export interface Warung {
   id: string | number;
+  slug?: string;
   nama?: string;
   rating: number;
   ratingRataRata?: number;
   jumlahUlasan?: number;
   jamBuka?: string;
+  openingHours?: string;
   logo?: string;
   kategori?: string[];
   deskripsi?: string;
+  description?: string;
   name?: string;
   location?: string;
   isOpen?: boolean;

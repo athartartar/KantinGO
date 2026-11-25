@@ -70,6 +70,7 @@ export default function PaymentQris() {
 
       if (!targetOrderId) {
         const createdOrder = await createOrder({
+          kodePesanan: "",
           warungId: String(orderState.warungId || ""),
           warungNama,
           items: orderState.items || [],
@@ -81,6 +82,7 @@ export default function PaymentQris() {
           total: orderState.total,
           dibuatPada: new Date().toISOString(),
           status: "diproses",
+          sudahDiulas: false,
           idempotencyKey: orderState.idempotencyKey,
         });
         targetOrderId = createdOrder.id;

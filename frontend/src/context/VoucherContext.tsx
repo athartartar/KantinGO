@@ -14,6 +14,7 @@ export interface VoucherContextType {
   voucherCount: number;
   redeemedCodes: string[];
   redeemVoucher: (code: string) => Promise<RedeemResult>;
+  clearVouchers: () => void;
 }
 
 const VoucherContext = createContext<VoucherContextType | undefined>(undefined);
@@ -55,6 +56,15 @@ export function VoucherProvider({ children }: { children: React.ReactNode }) {
     return result;
   };
 
+  const clearVouchers = () => {
+    setUserVouchers([]);
+    setRedeemedCodes([]);
+    try {
+      localStorage.removeItem("kantingo_redeemed_codes_v1");
+      localStorage.removeItem("kantingo_user_vouchers_v1");
+    } catch {}
+  };
+
   return (
     <VoucherContext.Provider
       value={{
@@ -62,6 +72,7 @@ export function VoucherProvider({ children }: { children: React.ReactNode }) {
         voucherCount: userVouchers.length,
         redeemedCodes,
         redeemVoucher,
+        clearVouchers,
       }}
     >
       {children}

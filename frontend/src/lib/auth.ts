@@ -17,10 +17,19 @@ export interface AuthUser {
     id: number;
     name: string;
     slug: string;
-    status: "pending" | "approved" | "rejected";
+    status: "pending" | "approved" | "rejected" | "suspended";
     rejection_reason?: string | null;
     is_open: boolean;
   } | null;
+}
+
+export function getDefaultHomeForUser(user?: AuthUser | null): string {
+  const resolvedUser = user ?? getAuthUser();
+  const role = resolvedUser?.role ?? getRole();
+  if (role === "warung_owner") {
+    return resolvedUser?.warung?.status === "approved" ? "/mitra" : "/mitra/menunggu";
+  }
+  return "/";
 }
 
 export class ApiError extends Error {
@@ -170,7 +179,7 @@ export async function apiFetch<T = any>(path: string, options: ApiFetchOptions =
 
   if (response.status === 429) {
     throw new ApiError(
-      payload?.message || "Terlalu banyak permintaan. Silakan coba lagi nanti.",
+      payload?.message || "Terlalu banyak percobaan, coba lagi nanti",
       429
     );
   }
