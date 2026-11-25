@@ -14,6 +14,7 @@ use App\Models\Payment;
 use App\Models\UserVoucher;
 use App\Models\Voucher;
 use App\Models\Warung;
+use App\Services\Wallet\WalletService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -296,11 +297,11 @@ class OrderController extends Controller
         ]);
     }
 
-    public function cancel(Order $order): JsonResponse
+    public function cancel(Order $order, WalletService $walletService): JsonResponse
     {
         Gate::authorize('cancel', $order);
 
-        $updatedOrder = DB::transaction(function () use ($order) {
+        $updatedOrder = DB::transaction(function () use ($order, $walletService) {
             $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
 
             if (! in_array($lockedOrder->status, [
@@ -310,6 +311,7 @@ class OrderController extends Controller
                 return null;
             }
 
+            $previousStatus = $lockedOrder->status;
             $lockedOrder->status = Order::STATUS_DIBATALKAN;
             $lockedOrder->cancelled_at = now();
             $lockedOrder->save();
@@ -318,9 +320,16 @@ class OrderController extends Controller
                 ->where('status', Payment::STATUS_PENDING)
                 ->update(['status' => Payment::STATUS_EXPIRED]);
 
-            $lockedOrder->payments()
-                ->where('status', Payment::STATUS_PAID)
-                ->update(['status' => Payment::STATUS_REFUNDED]);
+            if ($previousStatus === Order::STATUS_DIPROSES) {
+                $paidPayment = $lockedOrder->payments()
+                    ->where('status', Payment::STATUS_PAID)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($paidPayment) {
+                    $walletService->refundOnOrderCancelled($lockedOrder, $paidPayment);
+                }
+            }
 
             return $lockedOrder->load(['warung', 'items', 'payment']);
         });
@@ -372,11 +381,11 @@ class OrderController extends Controller
         ]);
     }
 
-    public function confirmPickup(Order $order): JsonResponse
+    public function confirmPickup(Order $order, WalletService $walletService): JsonResponse
     {
         Gate::authorize('confirmPickup', $order);
 
-        $updatedOrder = DB::transaction(function () use ($order) {
+        $updatedOrder = DB::transaction(function () use ($order, $walletService) {
             $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedOrder->status !== Order::STATUS_SIAP) {
@@ -386,6 +395,8 @@ class OrderController extends Controller
             $lockedOrder->status = Order::STATUS_SELESAI;
             $lockedOrder->completed_at = now();
             $lockedOrder->save();
+
+            $walletService->releaseOnOrderCompleted($lockedOrder);
 
             return $lockedOrder->load(['warung', 'items', 'payment']);
         });

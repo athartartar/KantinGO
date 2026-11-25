@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\CanteenController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\MenuController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\PartnerWalletController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\WarungController;
@@ -65,4 +66,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{order}/confirm-pickup', [OrderController::class, 'confirmPickup']);
     Route::post('/orders/{order}/pay', [PaymentController::class, 'pay']);
     Route::get('/orders/{order}/payment', [PaymentController::class, 'status']);
+});
+
+Route::prefix('partner')->middleware(['auth:sanctum', 'approved.partner'])->group(function () {
+    Route::get('/wallet', [PartnerWalletController::class, 'show']);
+    Route::put('/bank-account', [PartnerWalletController::class, 'updateBankAccount']);
+    Route::post('/withdrawals', [PartnerWalletController::class, 'withdraw']);
+    Route::get('/withdrawals', [PartnerWalletController::class, 'withdrawals']);
 });
