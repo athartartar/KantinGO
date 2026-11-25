@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Warung;
 
 class OrderPolicy
 {
@@ -14,7 +15,7 @@ class OrderPolicy
         }
 
         if ($user->role === 'warung_owner') {
-            $warung = $order->warung;
+            $warung = Warung::find($order->warung_id);
 
             return $warung !== null
                 && $warung->owner_id === $user->id
@@ -36,7 +37,7 @@ class OrderPolicy
         }
 
         if ($user->role === 'warung_owner') {
-            $warung = $order->warung;
+            $warung = Warung::find($order->warung_id);
 
             return $warung !== null
                 && $warung->owner_id === $user->id

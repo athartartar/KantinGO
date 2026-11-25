@@ -5,15 +5,18 @@ namespace App\Policies;
 use App\Models\Menu;
 use App\Models\MenuAddon;
 use App\Models\User;
+use App\Models\Warung;
 
 class MenuAddonPolicy
 {
     public function viewAny(User $user, Menu $menu): bool
     {
+        $warung = Warung::where('owner_id', $user->id)->first();
+
         return $user->role === 'warung_owner'
-            && $user->warung !== null
-            && $user->warung->status === 'approved'
-            && $menu->warung_id === $user->warung->id;
+            && $warung !== null
+            && $warung->status === 'approved'
+            && $menu->warung_id === $warung->id;
     }
 
     public function create(User $user, Menu $menu): bool

@@ -8,6 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Warung;
+use App\Services\Audit\AuditLogger;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -81,7 +84,7 @@ class PaymentController extends Controller
 
     public function simulateShow(string $code): JsonResponse
     {
-        $payment = Payment::with('order.warung')->where('code', $code)->first();
+        $payment = Payment::where('code', $code)->first();
 
         if (! $payment) {
             return response()->json([
@@ -90,20 +93,25 @@ class PaymentController extends Controller
             ], 404);
         }
 
+        $order = Order::find($payment->order_id);
+        $warung = $order ? Warung::find($order->warung_id) : null;
+        $expiresAt = $payment->expires_at ? Carbon::parse($payment->expires_at) : null;
+        $paidAt = $payment->paid_at ? Carbon::parse($payment->paid_at) : null;
+
         $isExpired = $payment->status === Payment::STATUS_EXPIRED
-            || ($payment->status === Payment::STATUS_PENDING && $payment->expires_at !== null && $payment->expires_at->isPast());
+            || ($payment->status === Payment::STATUS_PENDING && $expiresAt !== null && $expiresAt->isPast());
 
         return response()->json([
             'success' => true,
             'message' => 'Detail simulasi pembayaran berhasil diambil.',
             'data' => [
                 'code' => $payment->code,
-                'warung_name' => $payment->order?->warung?->name,
+                'warung_name' => $warung?->name,
                 'amount' => $payment->amount,
                 'status' => $isExpired && $payment->status === Payment::STATUS_PENDING ? Payment::STATUS_EXPIRED : $payment->status,
                 'expired' => $isExpired,
-                'expires_at' => $payment->expires_at?->toIso8601String(),
-                'paid_at' => $payment->paid_at?->toIso8601String(),
+                'expires_at' => $expiresAt?->toIso8601String(),
+                'paid_at' => $paidAt?->toIso8601String(),
             ],
         ]);
     }
@@ -128,7 +136,7 @@ class PaymentController extends Controller
                 return ['error' => 'Pembayaran sudah diproses atau tidak lagi berlaku.', 'status' => 422];
             }
 
-            if ($payment->expires_at !== null && $payment->expires_at->isPast()) {
+            if ($payment->expires_at !== null && Carbon::parse($payment->expires_at)->isPast()) {
                 $payment->status = Payment::STATUS_EXPIRED;
                 $payment->save();
 
@@ -150,6 +158,10 @@ class PaymentController extends Controller
             $order->save();
 
             PaymentPaid::dispatch($payment);
+            AuditLogger::log($order->user_id, 'payment.paid', Payment::class, $payment->id, [
+                'order_id' => $order->id,
+                'amount' => $payment->amount,
+            ]);
 
             return ['payment' => $payment, 'order' => $order];
         });

@@ -10,14 +10,18 @@ use App\Http\Resources\WithdrawalResource;
 use App\Models\PartnerBankAccount;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
+use App\Services\Audit\AuditLogger;
 use App\Services\Wallet\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class PartnerWalletController extends Controller
 {
     public function show(Request $request): JsonResponse
     {
+        Gate::authorize('managePartner', Wallet::class);
+
         $user = $request->user();
         $wallet = Wallet::where('type', Wallet::TYPE_PARTNER)
             ->where('user_id', $user->id)
@@ -34,8 +38,8 @@ class PartnerWalletController extends Controller
             'success' => true,
             'message' => 'Data dompet mitra berhasil diambil.',
             'data' => [
-                'pending_balance' => $wallet?->pending_balance ?? 0,
-                'available_balance' => $wallet?->available_balance ?? 0,
+                'pending_balance' => $wallet ? $wallet->pending_balance : 0,
+                'available_balance' => $wallet ? $wallet->available_balance : 0,
                 'bank_account' => $bankAccount ? [
                     'bank_name' => $bankAccount->bank_name,
                     'account_holder' => $bankAccount->account_holder,
@@ -54,6 +58,8 @@ class PartnerWalletController extends Controller
 
     public function updateBankAccount(UpdateBankAccountRequest $request): JsonResponse
     {
+        Gate::authorize('managePartner', Wallet::class);
+
         $user = $request->user();
         $validated = $request->validated();
 
@@ -65,6 +71,11 @@ class PartnerWalletController extends Controller
                 'account_number' => $validated['account_number'],
             ]
         );
+
+        AuditLogger::log($user->id, 'bank_account.updated', PartnerBankAccount::class, $bankAccount->id, [
+            'bank_name' => $bankAccount->bank_name,
+            'account_number_masked' => $bankAccount->maskedAccountNumber(),
+        ], $request);
 
         return response()->json([
             'success' => true,
@@ -79,11 +90,27 @@ class PartnerWalletController extends Controller
 
     public function withdraw(StoreWithdrawalRequest $request, WalletService $walletService): JsonResponse
     {
+        Gate::authorize('managePartner', Wallet::class);
+
         $result = $walletService->withdraw(
             $request->user(),
             (int) $request->validated('amount'),
             $request->header('Idempotency-Key')
         );
+
+        if ($result['created']) {
+            AuditLogger::log(
+                $request->user()->id,
+                'withdrawal.created',
+                Withdrawal::class,
+                $result['withdrawal']->id,
+                [
+                    'amount' => $result['withdrawal']->amount,
+                    'reference' => $result['withdrawal']->reference,
+                ],
+                $request
+            );
+        }
 
         return response()->json([
             'success' => true,
@@ -94,6 +121,8 @@ class PartnerWalletController extends Controller
 
     public function withdrawals(Request $request): JsonResponse
     {
+        Gate::authorize('managePartner', Wallet::class);
+
         $perPage = min((int) $request->input('per_page', 15), 50);
         $withdrawals = Withdrawal::where('user_id', $request->user()->id)
             ->latest('id')

@@ -9,6 +9,7 @@ use App\Http\Resources\WarungResource;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Wallet;
+use App\Models\Warung;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,7 +18,7 @@ class PartnerWarungController extends Controller
 {
     public function show(Request $request): JsonResponse
     {
-        $warung = $request->user()->warung()->with('canteen')->firstOrFail();
+        $warung = Warung::with('canteen')->where('owner_id', $request->user()->id)->firstOrFail();
         Gate::authorize('view', $warung);
 
         return response()->json([
@@ -29,7 +30,7 @@ class PartnerWarungController extends Controller
 
     public function update(UpdateWarungRequest $request): JsonResponse
     {
-        $warung = $request->user()->warung()->firstOrFail();
+        $warung = Warung::where('owner_id', $request->user()->id)->firstOrFail();
         Gate::authorize('update', $warung);
 
         $warung->fill($request->validated());
@@ -44,7 +45,7 @@ class PartnerWarungController extends Controller
 
     public function toggleOpen(ToggleWarungOpenRequest $request): JsonResponse
     {
-        $warung = $request->user()->warung()->firstOrFail();
+        $warung = Warung::where('owner_id', $request->user()->id)->firstOrFail();
         Gate::authorize('update', $warung);
 
         $warung->is_open = (bool) $request->validated('is_open');
@@ -60,7 +61,7 @@ class PartnerWarungController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
-        $warung = $user->warung()->firstOrFail();
+        $warung = Warung::where('owner_id', $user->id)->firstOrFail();
         Gate::authorize('view', $warung);
 
         $todayOrdersQuery = Order::where('warung_id', $warung->id)
@@ -88,8 +89,8 @@ class PartnerWarungController extends Controller
             'data' => [
                 'orders_today' => $ordersToday,
                 'revenue_today' => $revenueToday,
-                'pending_balance' => $wallet?->pending_balance ?? 0,
-                'available_balance' => $wallet?->available_balance ?? 0,
+                'pending_balance' => $wallet ? $wallet->pending_balance : 0,
+                'available_balance' => $wallet ? $wallet->available_balance : 0,
             ],
         ]);
     }

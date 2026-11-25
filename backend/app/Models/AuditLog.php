@@ -16,6 +16,7 @@ class AuditLog extends Model
         'auditable_id',
         'metadata',
         'ip_address',
+        'user_agent',
     ];
 
     protected function casts(): array

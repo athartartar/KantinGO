@@ -5,32 +5,22 @@ namespace App\Http\Controllers\Api\V1;
 use App\Events\OrderStatusChanged;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\UpdateOrderStatusRequest;
+use App\Http\Requests\Partner\PartnerOrderIndexRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Warung;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 
 class PartnerOrderController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(PartnerOrderIndexRequest $request): JsonResponse
     {
-        $request->validate([
-            'status' => ['nullable', 'string', Rule::in([
-                Order::STATUS_DIPROSES,
-                Order::STATUS_SIAP,
-                Order::STATUS_SELESAI,
-                Order::STATUS_DIBATALKAN,
-            ])],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-        ], [
-            'status.in' => 'Filter status pesanan mitra tidak valid.',
-        ]);
-
-        $warung = $request->user()->warung()->firstOrFail();
+        $warung = Warung::where('owner_id', $request->user()->id)->firstOrFail();
+        Gate::authorize('view', $warung);
 
         $query = Order::with(['items', 'payment', 'warung'])
             ->where('warung_id', $warung->id)
@@ -94,6 +84,11 @@ class PartnerOrderController extends Controller
                 'message' => 'Transisi status pesanan tidak diizinkan.',
             ], 422);
         }
+
+        AuditLogger::log($request->user()?->id, 'order.status_updated', Order::class, $updatedOrder->id, [
+            'order_code' => $updatedOrder->order_code,
+            'status' => $updatedOrder->status,
+        ], $request);
 
         return response()->json([
             'success' => true,

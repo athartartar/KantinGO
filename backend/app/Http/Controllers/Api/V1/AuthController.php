@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Models\User;
 use App\Models\Warung;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -86,6 +87,7 @@ class AuthController extends Controller
         if (! $user) {
             Hash::check($validated['password'], self::DUMMY_HASH);
             RateLimiter::hit($lockoutKey, 900);
+            AuditLogger::log(null, 'auth.login_failed', User::class, 0, ['email' => $email], $request);
 
             return response()->json([
                 'success' => false,
@@ -95,6 +97,7 @@ class AuthController extends Controller
 
         if (! Hash::check($validated['password'], $user->password)) {
             RateLimiter::hit($lockoutKey, 900);
+            AuditLogger::log($user->id, 'auth.login_failed', User::class, $user->id, ['email' => $email], $request);
 
             return response()->json([
                 'success' => false,
@@ -108,6 +111,8 @@ class AuthController extends Controller
 
         $expiresAt = now()->addHours(12);
         $token = $user->createToken('auth_token', $this->abilitiesForRole($user->role), $expiresAt);
+
+        AuditLogger::log($user->id, 'auth.login', User::class, $user->id, ['role' => $user->role], $request);
 
         return response()->json([
             'success' => true,
@@ -214,6 +219,8 @@ class AuthController extends Controller
 
         $expiresAt = now()->addHours(12);
         $token = $user->createToken('auth_token', $this->abilitiesForRole($user->role), $expiresAt);
+
+        AuditLogger::log($user->id, 'auth.password_updated', User::class, $user->id, [], $request);
 
         return response()->json([
             'success' => true,

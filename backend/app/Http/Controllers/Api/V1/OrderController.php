@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Events\OrderCompleted;
 use App\Events\OrderStatusChanged;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Order\OrderIndexRequest;
 use App\Http\Requests\Order\StoreOrderRequest;
 use App\Http\Requests\Order\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
@@ -16,6 +17,7 @@ use App\Models\Payment;
 use App\Models\UserVoucher;
 use App\Models\Voucher;
 use App\Models\Warung;
+use App\Services\Audit\AuditLogger;
 use App\Services\Wallet\WalletService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -28,15 +30,8 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(OrderIndexRequest $request): JsonResponse
     {
-        $request->validate([
-            'status' => ['nullable', 'string', Rule::in(Order::STATUSES)],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-        ], [
-            'status.in' => 'Filter status pesanan tidak valid.',
-        ]);
-
         $query = Order::with(['warung', 'items', 'payment'])
             ->where('user_id', $request->user()->id)
             ->latest();
@@ -232,7 +227,7 @@ class OrderController extends Controller
                         ],
                         [
                             'status' => 'used',
-                            'claimed_at' => $userVoucher?->claimed_at ?? $now,
+                            'claimed_at' => $userVoucher ? $userVoucher->claimed_at : $now,
                             'used_at' => $now,
                         ]
                     );
@@ -285,6 +280,12 @@ class OrderController extends Controller
             throw $e;
         }
 
+        AuditLogger::log($user->id, 'order.created', Order::class, $order->id, [
+            'order_code' => $order->order_code,
+            'warung_id' => $order->warung_id,
+            'total' => $order->total,
+        ], $request);
+
         return response()->json([
             'success' => true,
             'message' => 'Pesanan berhasil dibuat.',
@@ -327,7 +328,7 @@ class OrderController extends Controller
                 ->update(['status' => Payment::STATUS_EXPIRED]);
 
             if ($previousStatus === Order::STATUS_DIPROSES) {
-                $paidPayment = $lockedOrder->payments()
+                $paidPayment = Payment::where('order_id', $lockedOrder->id)
                     ->where('status', Payment::STATUS_PAID)
                     ->lockForUpdate()
                     ->first();
@@ -348,6 +349,11 @@ class OrderController extends Controller
                 'message' => 'Pesanan tidak dapat dibatalkan pada status saat ini.',
             ], 422);
         }
+
+        AuditLogger::log(request()->user()?->id, 'order.cancelled', Order::class, $updatedOrder->id, [
+            'order_code' => $updatedOrder->order_code,
+            'status' => $updatedOrder->status,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -384,6 +390,11 @@ class OrderController extends Controller
             ], 422);
         }
 
+        AuditLogger::log($request->user()?->id, 'order.status_updated', Order::class, $updatedOrder->id, [
+            'order_code' => $updatedOrder->order_code,
+            'status' => $updatedOrder->status,
+        ], $request);
+
         return response()->json([
             'success' => true,
             'message' => 'Status pesanan berhasil diperbarui.',
@@ -419,6 +430,11 @@ class OrderController extends Controller
                 'message' => 'Pesanan belum siap diambil atau sudah selesai.',
             ], 422);
         }
+
+        AuditLogger::log(request()->user()?->id, 'order.completed', Order::class, $updatedOrder->id, [
+            'order_code' => $updatedOrder->order_code,
+            'status' => $updatedOrder->status,
+        ]);
 
         return response()->json([
             'success' => true,

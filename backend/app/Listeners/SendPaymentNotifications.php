@@ -5,12 +5,13 @@ namespace App\Listeners;
 use App\Events\PaymentPaid;
 use App\Models\Notification;
 use App\Models\Order;
+use App\Models\Warung;
 
 class SendPaymentNotifications
 {
     public function handle(PaymentPaid $event): void
     {
-        $order = Order::with('warung')->find($event->payment->order_id);
+        $order = Order::find($event->payment->order_id);
 
         if (! $order) {
             return;
@@ -27,9 +28,10 @@ class SendPaymentNotifications
             ],
         ]);
 
-        if ($order->warung) {
+        $warung = Warung::find($order->warung_id);
+        if ($warung) {
             Notification::create([
-                'user_id' => $order->warung->owner_id,
+                'user_id' => $warung->owner_id,
                 'type' => 'new_paid_order',
                 'title' => 'Pesanan Baru Dibayar',
                 'message' => "Pesanan baru {$order->order_code} telah dibayar dan siap diproses.",

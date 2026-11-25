@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Order;
 use App\Models\Payment;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +26,7 @@ class ExpirePaymentsCommand extends Command
             $processed = DB::transaction(function () use ($paymentId) {
                 $payment = Payment::where('id', $paymentId)->lockForUpdate()->first();
 
-                if (! $payment || $payment->status !== Payment::STATUS_PENDING || $payment->expires_at->gt(now())) {
+                if (! $payment || $payment->status !== Payment::STATUS_PENDING || ($payment->expires_at !== null && Carbon::parse($payment->expires_at)->gt(now()))) {
                     return false;
                 }
 

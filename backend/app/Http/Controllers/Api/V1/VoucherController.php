@@ -11,6 +11,7 @@ use App\Models\PointTransaction;
 use App\Models\User;
 use App\Models\UserVoucher;
 use App\Models\Voucher;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,6 +122,10 @@ class VoucherController extends Controller
             return $userVoucher->load('voucher');
         });
 
+        AuditLogger::log($user->id, 'voucher.redeemed', Voucher::class, $userVoucher->voucher_id, [
+            'code' => $code,
+        ], $request);
+
         return response()->json([
             'success' => true,
             'message' => 'Voucher berhasil diklaim.',
@@ -186,6 +191,11 @@ class VoucherController extends Controller
                 'points_remaining' => $lockedUser->points,
             ];
         });
+
+        AuditLogger::log($user->id, 'voucher.claimed', Voucher::class, $voucher->id, [
+            'code' => $voucher->code,
+            'points_cost' => $voucher->points_cost,
+        ], $request);
 
         return response()->json([
             'success' => true,

@@ -5,13 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MenuResource;
 use App\Models\Menu;
+use App\Models\Warung;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MenuController extends Controller
 {
-    private const SORT_WHITELIST = ['price', 'rating_avg', 'sold_count', 'name', 'created_at'];
-
     public function popular(Request $request): JsonResponse
     {
         $perPage = min((int) $request->input('per_page', 10), 50);
@@ -37,8 +36,9 @@ class MenuController extends Controller
 
     public function show(Menu $menu): JsonResponse
     {
+        $warung = Warung::find($menu->warung_id);
         abort_if(! $menu->is_available, 404);
-        abort_if($menu->warung?->status !== 'approved', 404);
+        abort_if(! $warung || $warung->status !== 'approved', 404);
 
         $menu->load(['warung.canteen', 'category', 'addons']);
 

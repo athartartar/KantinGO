@@ -3,26 +3,21 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdminPartnerApplicationIndexRequest;
 use App\Http\Requests\Admin\RejectPartnerApplicationRequest;
-use App\Models\AuditLog;
 use App\Models\Notification;
 use App\Models\Wallet;
 use App\Models\Warung;
 use App\Models\Withdrawal;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class AdminPartnerController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(AdminPartnerApplicationIndexRequest $request): JsonResponse
     {
-        $request->validate([
-            'status' => ['nullable', 'string', Rule::in(['pending', 'approved', 'rejected'])],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-        ]);
-
         $query = Warung::with(['owner:id,name,email,phone', 'canteen:id,name'])
             ->latest('id');
 
@@ -70,17 +65,17 @@ class AdminPartnerController extends Controller
                 ],
             ]);
 
-            AuditLog::create([
-                'user_id' => $admin->id,
-                'action' => 'partner_application.approved',
-                'auditable_type' => Warung::class,
-                'auditable_id' => $lockedWarung->id,
-                'metadata' => [
+            AuditLogger::log(
+                $admin->id,
+                'partner_application.approved',
+                Warung::class,
+                $lockedWarung->id,
+                [
                     'warung_name' => $lockedWarung->name,
                     'owner_id' => $lockedWarung->owner_id,
                 ],
-                'ip_address' => $request->ip(),
-            ]);
+                $request
+            );
 
             return $lockedWarung;
         });
@@ -117,18 +112,18 @@ class AdminPartnerController extends Controller
                 ],
             ]);
 
-            AuditLog::create([
-                'user_id' => $admin->id,
-                'action' => 'partner_application.rejected',
-                'auditable_type' => Warung::class,
-                'auditable_id' => $lockedWarung->id,
-                'metadata' => [
+            AuditLogger::log(
+                $admin->id,
+                'partner_application.rejected',
+                Warung::class,
+                $lockedWarung->id,
+                [
                     'warung_name' => $lockedWarung->name,
                     'owner_id' => $lockedWarung->owner_id,
                     'reason' => $reason,
                 ],
-                'ip_address' => $request->ip(),
-            ]);
+                $request
+            );
 
             return $lockedWarung;
         });
@@ -151,7 +146,7 @@ class AdminPartnerController extends Controller
             'success' => true,
             'message' => 'Ringkasan dompet platform berhasil diambil.',
             'data' => [
-                'platform_balance' => $platformWallet?->available_balance ?? 0,
+                'platform_balance' => $platformWallet ? $platformWallet->available_balance : 0,
                 'total_withdrawn' => $totalWithdrawn,
                 'partner_pending_total' => $partnerPendingTotal,
                 'partner_available_total' => $partnerAvailableTotal,

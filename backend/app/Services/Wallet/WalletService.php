@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Models\Warung;
 use App\Models\Withdrawal;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -68,7 +69,8 @@ class WalletService
     public function creditOnPaymentPaid(Payment $payment): void
     {
         DB::transaction(function () use ($payment) {
-            $order = Order::with('warung')->where('id', $payment->order_id)->lockForUpdate()->firstOrFail();
+            $order = Order::where('id', $payment->order_id)->lockForUpdate()->firstOrFail();
+            $warung = Warung::findOrFail($order->warung_id);
 
             $alreadyCredited = WalletTransaction::where('order_id', $order->id)
                 ->where('type', WalletTransaction::TYPE_HOLD)
@@ -97,7 +99,7 @@ class WalletService
                 'reference' => 'WTX-'.strtoupper(bin2hex(random_bytes(10))),
             ]);
 
-            $partnerWallet = $this->getOrCreatePartnerWallet($order->warung->owner_id);
+            $partnerWallet = $this->getOrCreatePartnerWallet($warung->owner_id);
             $partnerWallet->pending_balance += $partnerShare;
             $partnerWallet->save();
 
@@ -216,9 +218,7 @@ class WalletService
                 }
             }
 
-            $lockedPayment = Payment::where('id', $payment->id)->lockForUpdate()->firstOrFail();
-            $lockedPayment->status = Payment::STATUS_REFUNDED;
-            $lockedPayment->save();
+            Payment::where('id', $payment->id)->update(['status' => Payment::STATUS_REFUNDED]);
         });
     }
 

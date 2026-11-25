@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/Console
+        - app/Contracts
+        - app/Events
+        - app/Http/Controllers
+        - app/Http/Requests
+        - app/Listeners
+        - app/Models
+        - app/Policies
+        - app/Services
+    level: 5
+    treatPhpDocTypesAsCertain: false
+    noModelMake: true

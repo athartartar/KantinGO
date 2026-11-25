@@ -7,6 +7,7 @@ use App\Http\Requests\Partner\StoreMenuRequest;
 use App\Http\Requests\Partner\UpdateMenuRequest;
 use App\Http\Resources\MenuResource;
 use App\Models\Menu;
+use App\Models\Warung;
 use App\Services\Media\ImageUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class PartnerMenuController extends Controller
     {
         Gate::authorize('viewAny', Menu::class);
 
-        $warung = $request->user()->warung;
+        $warung = Warung::where('owner_id', $request->user()->id)->firstOrFail();
         $perPage = min((int) $request->input('per_page', 15), 50);
 
         $menus = Menu::with(['category', 'addons'])
@@ -44,7 +45,7 @@ class PartnerMenuController extends Controller
     {
         Gate::authorize('create', Menu::class);
 
-        $warung = $request->user()->warung;
+        $warung = Warung::where('owner_id', $request->user()->id)->firstOrFail();
         $validated = $request->validated();
 
         $imagePath = null;
