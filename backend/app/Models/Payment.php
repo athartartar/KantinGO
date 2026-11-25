@@ -10,20 +10,28 @@ class Payment extends Model
 {
     use HasFactory;
 
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_PAID = 'paid';
+
+    public const STATUS_EXPIRED = 'expired';
+
+    public const STATUS_REFUNDED = 'refunded';
+
     protected $fillable = [
         'order_id',
-        'payment_code',
+        'code',
         'method',
         'amount',
         'status',
         'qris_payload',
-        'provider_reference',
+        'reference',
         'expires_at',
         'paid_at',
     ];
 
     protected $hidden = [
-        'provider_reference',
+        'reference',
     ];
 
     protected function casts(): array

@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 class PaymentFactory extends Factory
 {
@@ -13,14 +12,16 @@ class PaymentFactory extends Factory
 
     public function definition(): array
     {
+        $code = bin2hex(random_bytes(20));
+
         return [
             'order_id' => Order::factory(),
-            'payment_code' => 'PAY-'.strtoupper(Str::random(10)),
+            'code' => $code,
             'method' => 'qris',
             'amount' => fake()->numberBetween(15, 50) * 1000,
             'status' => 'pending',
-            'qris_payload' => '00020101021226580014ID.CO.QRIS.WWW',
-            'provider_reference' => null,
+            'qris_payload' => rtrim((string) config('payment.frontend_url', 'http://localhost:5173'), '/').'/simulasi-bayar/'.$code,
+            'reference' => null,
             'expires_at' => now()->addMinutes(15),
             'paid_at' => null,
         ];

@@ -27,7 +27,7 @@ class OrderFactory extends Factory
             'discount' => 0,
             'service_fee' => $serviceFee,
             'total' => $subtotal + $serviceFee,
-            'status' => 'diproses',
+            'status' => 'menunggu_pembayaran',
             'notes' => null,
             'completed_at' => null,
             'cancelled_at' => null,

@@ -13,6 +13,26 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const SERVICE_FEE = 1000;
+
+    public const STATUS_MENUNGGU_PEMBAYARAN = 'menunggu_pembayaran';
+
+    public const STATUS_DIPROSES = 'diproses';
+
+    public const STATUS_SIAP = 'siap';
+
+    public const STATUS_SELESAI = 'selesai';
+
+    public const STATUS_DIBATALKAN = 'dibatalkan';
+
+    public const STATUSES = [
+        self::STATUS_MENUNGGU_PEMBAYARAN,
+        self::STATUS_DIPROSES,
+        self::STATUS_SIAP,
+        self::STATUS_SELESAI,
+        self::STATUS_DIBATALKAN,
+    ];
+
     protected $fillable = [
         'order_code',
         'user_id',
@@ -25,6 +45,7 @@ class Order extends Model
         'total',
         'status',
         'notes',
+        'idempotency_key',
         'completed_at',
         'cancelled_at',
     ];
@@ -62,9 +83,14 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function payment(): HasOne
     {
-        return $this->hasOne(Payment::class);
+        return $this->hasOne(Payment::class)->latestOfMany();
     }
 
     public function review(): HasOne
