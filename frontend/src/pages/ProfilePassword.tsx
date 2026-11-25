@@ -2,6 +2,7 @@ import { CheckCircle2, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
+import { authApi } from "../lib/api";
 
 export default function ProfilePassword() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function ProfilePassword() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -27,8 +28,15 @@ export default function ProfilePassword() {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setErrorMessage("Kata sandi baru minimal 6 karakter.");
+    if (
+      newPassword.length < 10 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[a-z]/.test(newPassword) ||
+      !/[0-9]/.test(newPassword)
+    ) {
+      setErrorMessage(
+        "Kata sandi baru minimal 10 karakter dengan huruf besar, huruf kecil, dan angka."
+      );
       return;
     }
 
@@ -38,15 +46,17 @@ export default function ProfilePassword() {
     }
 
     setIsSubmitting(true);
-
-    // Mock ubah kata sandi berhasil
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await authApi.updatePassword(oldPassword, newPassword, confirmPassword);
       setToastMessage("Kata sandi berhasil diubah!");
       setTimeout(() => {
         navigate("/profile");
-      }, 1200);
-    }, 600);
+      }, 1000);
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Gagal mengubah kata sandi.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

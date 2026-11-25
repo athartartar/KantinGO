@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   CheckCircle2,
@@ -9,8 +10,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import StarRating from "../components/StarRating";
+import { getWarungById } from "../lib/api";
 import { useOrders } from "../lib/orders";
-import { getWarungById } from "../lib/mock/warung";
 
 export default function Review() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -26,9 +27,11 @@ export default function Review() {
     return orderId ? getOrder(orderId) : undefined;
   }, [orderId, getOrder]);
 
-  const warung = useMemo(() => {
-    return order ? getWarungById(order.warungId) : undefined;
-  }, [order]);
+  const { data: warung } = useQuery({
+    queryKey: ["warung", order?.warungId],
+    queryFn: () => getWarungById(order!.warungId),
+    enabled: Boolean(order?.warungId),
+  });
 
   // Validasi: Jika order sudah diulas atau status belum "selesai", redirect ke /status
   useEffect(() => {

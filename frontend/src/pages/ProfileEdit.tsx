@@ -9,35 +9,35 @@ export default function ProfileEdit() {
   const { user, updateUser } = useUser();
 
   const [nama, setNama] = useState(user.nama);
-  const [username, setUsername] = useState(user.username);
-  const [email, setEmail] = useState(user.email);
   const [noHp, setNoHp] = useState(user.noHp || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nama.trim() || !email.trim()) {
-      setErrorMessage("Nama dan email wajib diisi.");
+    if (!nama.trim()) {
+      setErrorMessage("Nama wajib diisi.");
       return;
     }
 
     setErrorMessage(null);
     setIsSubmitting(true);
 
-    updateUser({
-      nama: nama.trim(),
-      username: username.trim().replace(/^@/, ""),
-      email: email.trim(),
-      noHp: noHp.trim(),
-    });
-
-    setToastMessage("Profil berhasil diperbarui!");
-
-    setTimeout(() => {
-      navigate("/profile");
-    }, 1200);
+    try {
+      await updateUser({
+        nama: nama.trim(),
+        noHp: noHp.trim(),
+      });
+      setToastMessage("Profil berhasil diperbarui!");
+      setTimeout(() => {
+        navigate("/profile");
+      }, 900);
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Gagal memperbarui profil.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -102,45 +102,20 @@ export default function ProfileEdit() {
             />
           </div>
 
-          {/* Field: Username */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="username"
-              className="text-xs font-bold text-navy uppercase tracking-wider block"
-            >
-              Username
-            </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-4 text-sm font-bold text-navy/40">
-                @
-              </span>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="username"
-                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-surface border border-blue-100 text-sm text-navy placeholder:text-navy/40 focus:outline-hidden focus:ring-2 focus:ring-primary focus:bg-white transition-all font-medium"
-              />
-            </div>
-          </div>
-
-          {/* Field: Email */}
+          {/* Field: Email (read-only) */}
           <div className="space-y-1.5">
             <label
               htmlFor="email"
               className="text-xs font-bold text-navy uppercase tracking-wider block"
             >
-              Email Kampus <span className="text-rose-500">*</span>
+              Email Akun
             </label>
             <input
               id="email"
               type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama@kampus.ac.id"
-              className="w-full px-4 py-3 rounded-2xl bg-surface border border-blue-100 text-sm text-navy placeholder:text-navy/40 focus:outline-hidden focus:ring-2 focus:ring-primary focus:bg-white transition-all font-medium"
+              disabled
+              value={user.email}
+              className="w-full px-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 text-sm text-navy/60 font-medium cursor-not-allowed"
             />
           </div>
 

@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowRight,
@@ -14,11 +15,10 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import QtyStepper from "../components/QtyStepper";
+import { getAvailableVouchers, getWarungById } from "../lib/api";
 import { useCart } from "../lib/cart";
 import { formatRupiah } from "../lib/format";
 import type { CartItem, Voucher } from "../lib/mock/types";
-import { mockVoucherList } from "../lib/mock/voucher";
-import { mockWarungList } from "../lib/mock/warung";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -32,13 +32,30 @@ export default function Checkout() {
     subtotal,
   } = useCart();
 
-  // Ambil info warung untuk cek jam operasional
-  const warung = useMemo(() => {
-    return (
-      mockWarungList.find((w) => String(w.id) === String(cartWarungId)) ||
-      mockWarungList[0]
-    );
-  }, [cartWarungId]);
+  const { data: warung } = useQuery({
+    queryKey: ["warung", cartWarungId],
+    queryFn: () => getWarungById(cartWarungId!),
+    enabled: Boolean(cartWarungId),
+  });
+
+  const { data: rawVouchers = [] } = useQuery({
+    queryKey: ["available-vouchers"],
+    queryFn: getAvailableVouchers,
+  });
+
+  const availableVouchers: Voucher[] = useMemo(
+    () =>
+      rawVouchers.map((v) => ({
+        id: v.id,
+        kode: v.code,
+        judul: v.title,
+        tipe: "nominal",
+        nilai: v.discount,
+        minimalBelanja: v.minSpend,
+        deskripsi: `Diskon Rp${v.discount.toLocaleString("id-ID")}`,
+      })),
+    [rawVouchers]
+  );
 
   // ----------------------------------------------------
   // State Waktu Pengambilan
@@ -691,7 +708,7 @@ export default function Checkout() {
             </div>
 
             <div className="overflow-y-auto space-y-3 pr-1 py-1 flex-1">
-              {mockVoucherList.map((v) => {
+              {availableVouchers.map((v) => {
                 const isEligible = subtotal >= v.minimalBelanja;
                 const isSelected = selectedVoucher?.id === v.id;
                 const diff = v.minimalBelanja - subtotal;

@@ -114,6 +114,13 @@ export function logout(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(ROLE_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("kantingo_user_v1");
+  localStorage.removeItem("kantingo_cart_state_v1");
+  localStorage.removeItem("kantingo_orders_v1");
+  localStorage.removeItem("kantingo_orders_history_v1");
+  localStorage.removeItem("kantingo_notifications_v1");
+  localStorage.removeItem("kantingo_redeemed_codes_v1");
+  localStorage.removeItem("kantingo_user_vouchers_v1");
 }
 
 export interface ApiFetchOptions extends RequestInit {

@@ -11,7 +11,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useVoucher } from "../context/VoucherContext";
 import type { VoucherItem } from "../lib/mock";
-import { mockHistoryVouchers } from "../lib/mock";
 
 const formatRupiah = (amount: number) => {
   return new Intl.NumberFormat("id-ID", {
@@ -25,10 +24,15 @@ export default function VoucherSaya() {
   const { userVouchers } = useVoucher();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
 
-  const historyVouchers = mockHistoryVouchers;
+  const activeVouchers = userVouchers.filter(
+    (v) => !v.status || v.status === "active"
+  );
+  const historyVouchers = userVouchers.filter(
+    (v) => v.status === "used" || v.status === "expired"
+  );
 
   const currentList: VoucherItem[] =
-    activeTab === "active" ? userVouchers : historyVouchers;
+    activeTab === "active" ? activeVouchers : historyVouchers;
 
   return (
     <div className="w-full">

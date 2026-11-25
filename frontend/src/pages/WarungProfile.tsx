@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Clock,
@@ -9,30 +10,36 @@ import {
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import { getWarungById } from "../lib/mock/warung";
-import { calculateWarungStats, getStoredReviews } from "../lib/mock/reviews";
+import { getReviews, getWarungById } from "../lib/api";
 import type { Review } from "../lib/mock/types";
 
 export default function WarungProfile() {
   const { warungId } = useParams<{ warungId: string }>();
 
-  // Ambil data warung dari mock
-  const warung = useMemo(() => {
-    return warungId ? getWarungById(warungId) : undefined;
-  }, [warungId]);
+  const { data: warung, isLoading: isWarungLoading } = useQuery({
+    queryKey: ["warung", warungId],
+    queryFn: () => getWarungById(warungId!),
+    enabled: Boolean(warungId),
+  });
 
-  // Ambil daftar ulasan warung dari localStorage (otomatis termasuk review baru yang di-submit)
-  const reviews = useMemo<Review[]>(() => {
-    if (!warungId) return [];
-    const all = getStoredReviews();
-    return all.filter((r) => String(r.warungId) === String(warungId));
-  }, [warungId]);
+  const { data: reviews = [] } = useQuery<Review[]>({
+    queryKey: ["warung-reviews", warungId],
+    queryFn: () => getReviews(warungId),
+    enabled: Boolean(warungId),
+  });
 
-  // Hitung rating rata-rata dan total ulasan dinamis
   const stats = useMemo(() => {
-    if (!warungId) return { ratingRataRata: 4.8, jumlahUlasan: 0 };
-    return calculateWarungStats(warungId, reviews);
-  }, [warungId, reviews]);
+    const jumlahUlasan = warung?.reviewCount ?? warung?.jumlahUlasan ?? reviews.length;
+    const avg =
+      warung?.rating ??
+      (reviews.length > 0
+        ? reviews.reduce((acc, r) => acc + Number(r.rating), 0) / reviews.length
+        : 4.8);
+    return {
+      ratingRataRata: Number(avg),
+      jumlahUlasan: Number(jumlahUlasan),
+    };
+  }, [warung, reviews]);
 
   // Hitung distribusi bintang 5 sampai 1
   const distribution = useMemo(() => {
@@ -43,6 +50,15 @@ export default function WarungProfile() {
       return { star, count, percentage };
     });
   }, [reviews]);
+
+  if (isWarungLoading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-6">
+        <div className="h-32 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+        <div className="h-64 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+      </div>
+    );
+  }
 
   if (!warung) {
     return (

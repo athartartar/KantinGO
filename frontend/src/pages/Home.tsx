@@ -8,7 +8,6 @@ import WarungCard from "../components/WarungCard";
 import WarungList from "../components/WarungList";
 import { getMenus, getWarungs } from "../lib/api";
 import type { MenuItem } from "../lib/mock";
-import { mockPopularMenus, mockWarung } from "../lib/mock";
 
 const formatRupiah = (amount: number) => {
   return new Intl.NumberFormat("id-ID", {
@@ -21,40 +20,39 @@ const formatRupiah = (amount: number) => {
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: allMenus = mockPopularMenus } = useQuery<MenuItem[]>({
+  const { data: warungs = [] } = useQuery({
+    queryKey: ["warungs"],
+    queryFn: () => getWarungs(),
+  });
+
+  const { data: allMenus = [] } = useQuery<MenuItem[]>({
     queryKey: ["menus"],
     queryFn: async () => {
-      try {
-        const raw = await getMenus();
-        if (!raw || raw.length === 0) return mockPopularMenus;
-        const warungs = await getWarungs();
-        const canteenMap = new Map(warungs.map((w) => [String(w.id), w.name || w.nama || "Kantin"]));
+      const raw = await getMenus();
+      if (!raw || raw.length === 0) return [];
+      const canteenMap = new Map(warungs.map((w) => [String(w.id), w.name || w.nama || "Kantin"]));
 
-                return raw.map((item) => ({
-          ...item,
-          id: String(item.id),
-          menuId: String(item.id),
-          warungId: String(item.warungId || "1"),
-          canteenId: Number(item.warungId) || 1,
-          canteenName: canteenMap.get(String(item.warungId)) || item.canteenName || "Kantin #1",
-          name: item.nama || item.name || "Menu",
-          price: item.harga ?? item.price ?? 0,
-          description: item.deskripsi || item.description || "",
-          imageUrl:
-            item.gambar ||
-            item.imageUrl ||
-            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
-          isAvailable: item.isAvailable ?? true,
-          rating: item.rating ?? 4.8,
-          soldCount: item.soldCount || 120,
-          categoryId: item.categoryId || "heavy",
-          addOnGroups: item.addOnGroups || [],
-        }));
-      } catch {
-        return mockPopularMenus;
-      }
+      return raw.map((item) => ({
+        ...item,
+        id: String(item.id),
+        menuId: String(item.id),
+        warungId: String(item.warungId || "1"),
+        canteenId: Number(item.warungId) || 1,
+        canteenName: canteenMap.get(String(item.warungId)) || item.canteenName || "Kantin #1",
+        name: item.nama || item.name || "Menu",
+        price: item.harga ?? item.price ?? 0,
+        description: item.deskripsi || item.description || "",
+        imageUrl:
+          item.gambar ||
+          item.imageUrl ||
+          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
+        isAvailable: item.isAvailable ?? true,
+        rating: item.rating ?? 4.8,
+        soldCount: item.soldCount || 0,
+        categoryId: item.categoryId || "heavy",
+        addOnGroups: item.addOnGroups || [],
+      }));
     },
-    initialData: mockPopularMenus,
   });
 
   const queryClean = searchQuery.trim().toLowerCase();
@@ -70,12 +68,12 @@ export default function Home() {
     : [];
 
   const matchingWarungs = isSearching
-    ? mockWarung.filter(
+    ? warungs.filter(
         (w) =>
-          w.name.toLowerCase().includes(queryClean) ||
-          w.location.toLowerCase().includes(queryClean) ||
+          (w.name || w.nama || "").toLowerCase().includes(queryClean) ||
+          (w.location || "").toLowerCase().includes(queryClean) ||
           (w.categoryLabel && w.categoryLabel.toLowerCase().includes(queryClean)) ||
-          w.categories.some((c) => c.toLowerCase().includes(queryClean))
+          (w.categories || w.kategori || []).some((c) => c.toLowerCase().includes(queryClean))
       )
     : [];
 

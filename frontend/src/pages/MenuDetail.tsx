@@ -1,59 +1,57 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Check,
   ShoppingBag,
   Store,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import QtyStepper from "../components/QtyStepper";
+import { getMenuById, getWarungById } from "../lib/api";
 import { useCart } from "../lib/cart";
 import { formatRupiah } from "../lib/format";
 import type { CartAddOn } from "../lib/mock/types";
-import { mockMenuList } from "../lib/mock/menu";
-import { mockWarungList } from "../lib/mock/warung";
 
 export default function MenuDetail() {
   const { warungId, menuId } = useParams<{ warungId: string; menuId: string }>();
   const navigate = useNavigate();
   const { addItem } = useCart();
 
-  const menu = useMemo(() => {
-    return (
-      mockMenuList.find(
-        (m) =>
-          String(m.id) === String(menuId) && String(m.warungId) === String(warungId)
-      ) || mockMenuList.find((m) => String(m.id) === String(menuId))
-    );
-  }, [menuId, warungId]);
+  const { data: menu, isLoading: isMenuLoading } = useQuery({
+    queryKey: ["menu", menuId],
+    queryFn: () => getMenuById(menuId!),
+    enabled: Boolean(menuId),
+  });
 
-  const warung = useMemo(() => {
-    if (!menu) return null;
-    return (
-      mockWarungList.find((w) => String(w.id) === String(menu.warungId)) ||
-      mockWarungList.find((w) => String(w.id) === String(warungId))
-    );
-  }, [menu, warungId]);
+  const resolvedWarungId = menu?.warungId || warungId;
+  const { data: warung } = useQuery({
+    queryKey: ["warung", resolvedWarungId],
+    queryFn: () => getWarungById(resolvedWarungId!),
+    enabled: Boolean(resolvedWarungId),
+  });
 
   // State jumlah pesanan (min 1)
   const [qty, setQty] = useState<number>(1);
 
   // State pilihan single add-on: Map<groupId, optionId>
-  // Opsi default diisi opsi pertama jika required
-  const [singleSelections, setSingleSelections] = useState<Record<string, string>>(
-    () => {
-      const initial: Record<string, string> = {};
-      if (menu?.addOnGroups) {
-        menu.addOnGroups.forEach((group) => {
-          if (group.tipe === "single" && group.opsi.length > 0) {
-            initial[group.id] = group.opsi[0].id;
-          }
-        });
-      }
-      return initial;
-    }
-  );
+  const [singleSelections, setSingleSelections] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!menu?.addOnGroups) return;
+    setSingleSelections((prev) => {
+      const next = { ...prev };
+      menu.addOnGroups.forEach((group: any) => {
+        const opts = group.opsi || group.options || [];
+        const tipe = group.tipe || group.type;
+        if (tipe === "single" && opts.length > 0 && !next[group.id]) {
+          next[group.id] = opts[0].id;
+        }
+      });
+      return next;
+    });
+  }, [menu]);
 
   // State pilihan multiple add-on: Map<optionId, boolean>
   const [multiSelections, setMultiSelections] = useState<Record<string, boolean>>(
@@ -70,6 +68,17 @@ export default function MenuDetail() {
 
   // State toast notifikasi
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  if (isMenuLoading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-5 h-96 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+          <div className="lg:col-span-7 h-96 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   if (!menu) {
     return (
@@ -243,8 +252,12 @@ export default function MenuDetail() {
               {/* Gambar Menu Besar */}
               <div className="relative w-full aspect-4/3 sm:aspect-16/10 lg:aspect-4/3 bg-slate-100 overflow-hidden">
                 <img
-                  src={menu.gambar}
-                  alt={menu.nama}
+                  src={menu.gambar || menu.imageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80"}
+                  alt={menu.nama || menu.name}
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80";
+                  }}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-navy/80 text-white text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-xs">

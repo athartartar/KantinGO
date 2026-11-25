@@ -2,12 +2,9 @@ import type { Menu, Warung, Order, OrderStatus, Review, CartItem } from "./mock/
 import type { User, Settings } from "./user/types";
 import type { VoucherItem } from "./mock";
 import type { AppNotification } from "./notifications/types";
-import { mockMenuList } from "./mock/menu";
-import { mockWarungList } from "./mock/warung";
-import { initialReviews } from "./mock/reviews";
-import { mockInitialUserVouchers, mockRedeemableVouchers } from "./mock";
 import {
   apiFetch,
+  getApiBaseUrl,
   isAuthenticated,
   isMockMode,
   logout as clearAuthStorage,
@@ -44,21 +41,40 @@ function setToStorage<T>(key: string, value: T): void {
   } catch {}
 }
 
+export function resolveImageUrl(path?: string | null): string {
+  if (!path || typeof path !== "string") return "";
+  const trimmed = path.trim();
+  if (!trimmed) return "";
+  if (/^(javascript|data|vbscript):/i.test(trimmed)) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  const origin = getApiBaseUrl().replace(/\/api\/v1$/, "");
+  if (trimmed.startsWith("/")) return `${origin}${trimmed}`;
+  return `${origin}/storage/${trimmed}`;
+}
+
 function mapMenuFromApi(raw: any): Menu {
   const addOnGroups = Array.isArray(raw.addon_groups)
-    ? raw.addon_groups.map((g: any) => ({
-        id: g.group_key || g.id,
-        title: g.group_title || g.title,
-        type: g.selection_type === "multiple" ? "multiple" : "single",
-        required: Boolean(g.is_required),
-        options: Array.isArray(g.options)
+    ? raw.addon_groups.map((g: any) => {
+        const mappedOptions = Array.isArray(g.options)
           ? g.options.map((o: any) => ({
               id: String(o.id),
               name: o.option_name || o.name,
+              nama: o.option_name || o.name,
               additionalPrice: Number(o.additional_price ?? 0),
+              hargaTambahan: Number(o.additional_price ?? 0),
             }))
-          : [],
-      }))
+          : [];
+        return {
+          id: g.group_key || g.id,
+          title: g.group_title || g.title,
+          judul: g.group_title || g.title,
+          type: g.selection_type === "multiple" ? "multiple" : "single",
+          tipe: g.selection_type === "multiple" ? "multiple" : "single",
+          required: Boolean(g.is_required),
+          options: mappedOptions,
+          opsi: mappedOptions,
+        };
+      })
     : [];
 
   return {
@@ -72,8 +88,8 @@ function mapMenuFromApi(raw: any): Menu {
     deskripsi: raw.description || "",
     price: Number(raw.price ?? 0),
     harga: Number(raw.price ?? 0),
-    imageUrl: raw.image_path || "",
-    gambar: raw.image_path || "",
+    imageUrl: resolveImageUrl(raw.image_path),
+    gambar: resolveImageUrl(raw.image_path),
     isAvailable: Boolean(raw.is_available ?? true),
     rating: Number(raw.rating_avg ?? 4.8),
     soldCount: Number(raw.sold_count ?? 0),
@@ -91,7 +107,7 @@ function mapWarungFromApi(raw: any): Warung {
     location: raw.location || raw.canteen?.name || "Kantin Kampus",
     jamBuka: raw.opening_hours || "08:00 - 17:00",
     openingHours: raw.opening_hours || "08:00 - 17:00",
-    logo: raw.logo_path || "",
+    logo: resolveImageUrl(raw.logo_path),
     estimatedMinutes: Number(raw.estimated_minutes ?? 10),
     rating: Number(raw.rating_avg ?? 4.8),
     reviewCount: Number(raw.review_count ?? 0),
@@ -204,27 +220,87 @@ function mapNotificationFromApi(raw: any): AppNotification {
 }
 
 export function getLocalMenus(): Menu[] {
-  const current = getFromStorage<Menu[]>(MENUS_KEY, []);
-  if (current.length === 0) {
-    setToStorage(MENUS_KEY, mockMenuList);
-    return mockMenuList;
-  }
-  return current;
+  return getFromStorage<Menu[]>(MENUS_KEY, []);
+}
+
+async function getMockMenus(): Promise<Menu[]> {
+  const current = getLocalMenus();
+  if (current.length > 0) return current;
+  const { mockMenuList } = await import("./mock/menu");
+  setToStorage(MENUS_KEY, mockMenuList);
+  return mockMenuList;
 }
 
 export async function getMenus(): Promise<Menu[]> {
-  if (isMockMode()) return getLocalMenus();
+  if (isMockMode()) return getMockMenus();
   const res = await apiFetch<{ data: any[] }>("/menus/popular?per_page=50", { skipAuthRedirect: true });
   return (res.data || []).map(mapMenuFromApi);
 }
 
 export async function getMenuById(id: string | number): Promise<Menu | undefined> {
   if (isMockMode()) {
-    const menus = getLocalMenus();
+    const menus = await getMockMenus();
     return menus.find((m) => String(m.id) === String(id));
   }
   const res = await apiFetch<{ data: any }>(`/menus/${id}`, { skipAuthRedirect: true });
   return res.data ? mapMenuFromApi(res.data) : undefined;
+}
+
+export async function getCategories(): Promise<Array<{ id: string; name: string; slug: string; icon?: string }>> {
+  if (isMockMode()) {
+    const { mockCategories } = await import("./mock");
+    return mockCategories.map((c: any) => ({
+      id: String(c.id),
+      name: c.name,
+      slug: c.slug,
+      icon: c.icon,
+    }));
+  }
+  const res = await apiFetch<{ data: any[] }>("/categories", { skipAuthRedirect: true });
+  return (res.data || []).map((c) => ({
+    id: String(c.id),
+    name: c.name,
+    slug: c.slug,
+    icon: c.icon,
+  }));
+}
+
+export async function getWarungMenus(warungId: string | number): Promise<Menu[]> {
+  if (isMockMode()) {
+    const menus = await getMockMenus();
+    return menus.filter((m) => String(m.warungId) === String(warungId));
+  }
+  const res = await apiFetch<{ data: any[] }>(`/warungs/${warungId}/menus?per_page=50`, { skipAuthRedirect: true });
+  return (res.data || []).map(mapMenuFromApi);
+}
+
+export async function searchAll(query: string): Promise<{ warungs: Warung[]; menus: Menu[] }> {
+  const trimmed = query.trim();
+  if (!trimmed) return { warungs: [], menus: [] };
+  if (isMockMode()) {
+    const q = trimmed.toLowerCase();
+    const [menus, warungs] = await Promise.all([getMockMenus(), getMockWarungs()]);
+    return {
+      menus: menus.filter(
+        (m) =>
+          (m.nama || m.name || "").toLowerCase().includes(q) ||
+          (m.deskripsi || m.description || "").toLowerCase().includes(q)
+      ),
+      warungs: warungs.filter(
+        (w) =>
+          (w.nama || w.name || "").toLowerCase().includes(q) ||
+          (w.location || "").toLowerCase().includes(q)
+      ),
+    };
+  }
+  const res = await apiFetch<{ data: { warungs: any[]; menus: any[] } }>(
+    `/search?q=${encodeURIComponent(trimmed)}&per_page=20`,
+    { skipAuthRedirect: true }
+  );
+  return {
+    warungs: (res.data?.warungs || []).map(mapWarungFromApi),
+    menus: (res.data?.menus || []).map(mapMenuFromApi),
+  };
 }
 
 export async function createMenu(item: Omit<Menu, "id"> & { id?: string }): Promise<Menu> {
@@ -297,23 +373,30 @@ export async function deleteMenu(id: string | number): Promise<boolean> {
 }
 
 export function getLocalWarungs(): Warung[] {
-  const current = getFromStorage<Warung[]>(WARUNG_KEY, []);
-  if (current.length === 0) {
-    setToStorage(WARUNG_KEY, mockWarungList);
-    return mockWarungList;
-  }
-  return current;
+  return getFromStorage<Warung[]>(WARUNG_KEY, []);
 }
 
-export async function getWarungs(): Promise<Warung[]> {
-  if (isMockMode()) return getLocalWarungs();
-  const res = await apiFetch<{ data: any[] }>("/warungs?per_page=50", { skipAuthRedirect: true });
+async function getMockWarungs(): Promise<Warung[]> {
+  const current = getLocalWarungs();
+  if (current.length > 0) return current;
+  const { mockWarungList } = await import("./mock/warung");
+  setToStorage(WARUNG_KEY, mockWarungList);
+  return mockWarungList;
+}
+
+export async function getWarungs(params?: { categorySlug?: string }): Promise<Warung[]> {
+  if (isMockMode()) return getMockWarungs();
+  const qs = new URLSearchParams({ per_page: "50" });
+  if (params?.categorySlug) {
+    qs.set("category_slug", params.categorySlug);
+  }
+  const res = await apiFetch<{ data: any[] }>(`/warungs?${qs.toString()}`, { skipAuthRedirect: true });
   return (res.data || []).map(mapWarungFromApi);
 }
 
 export async function getWarungById(id: string | number): Promise<Warung | undefined> {
   if (isMockMode()) {
-    const warungs = getLocalWarungs();
+    const warungs = await getMockWarungs();
     return warungs.find((w) => String(w.id) === String(id));
   }
   const res = await apiFetch<{ data: any }>(`/warungs/${id}`, { skipAuthRedirect: true });
@@ -491,14 +574,13 @@ export async function clearCart(): Promise<void> {
 }
 
 const defaultUser: User = {
-  id: "usr-01",
-  nama: "Radhitya Fadhil",
-  username: "radhityafadhil",
-  email: "radhitya.fadhil@kampus.ac.id",
-  noHp: "081234567890",
-  avatar:
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
-  poin: 1250,
+  id: "",
+  nama: "",
+  username: "",
+  email: "",
+  noHp: "",
+  avatar: "",
+  poin: 0,
 };
 
 const defaultSettings: Settings = {
@@ -558,17 +640,39 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
 }
 
 export function getLocalVouchers(): VoucherItem[] {
-  const saved = getFromStorage<VoucherItem[]>(VOUCHERS_KEY, []);
-  if (saved.length === 0) {
-    setToStorage(VOUCHERS_KEY, mockInitialUserVouchers);
-    return mockInitialUserVouchers;
-  }
-  return saved;
+  return getFromStorage<VoucherItem[]>(VOUCHERS_KEY, []);
+}
+
+async function getMockVouchers(): Promise<VoucherItem[]> {
+  const saved = getLocalVouchers();
+  if (saved.length > 0) return saved;
+  const { mockInitialUserVouchers } = await import("./mock");
+  setToStorage(VOUCHERS_KEY, mockInitialUserVouchers);
+  return mockInitialUserVouchers;
 }
 
 export async function getVouchers(): Promise<VoucherItem[]> {
-  if (isMockMode() || !isAuthenticated()) return getLocalVouchers();
+  if (isMockMode()) return getMockVouchers();
+  if (!isAuthenticated()) return [];
   const res = await apiFetch<{ data: any[] }>("/me/vouchers?per_page=50");
+  return (res.data || []).map(mapUserVoucherFromApi);
+}
+
+export async function getAvailableVouchers(): Promise<VoucherItem[]> {
+  if (isMockMode()) {
+    const { mockVoucherList } = await import("./mock/voucher");
+    return mockVoucherList.map((v) => ({
+      id: v.id,
+      code: v.kode,
+      title: v.judul,
+      discount: v.nilai,
+      minSpend: v.minimalBelanja,
+      status: "active" as const,
+      validUntil: "",
+    }));
+  }
+  if (!isAuthenticated()) return [];
+  const res = await apiFetch<{ data: any[] }>("/vouchers?per_page=50");
   return (res.data || []).map(mapUserVoucherFromApi);
 }
 
@@ -612,6 +716,7 @@ export async function redeemVoucher(rawCode: string): Promise<{
     };
   }
 
+  const { mockRedeemableVouchers } = await import("./mock");
   const matched = mockRedeemableVouchers.find(
     (v) => v.code.toUpperCase() === normalizedCode
   );
@@ -644,13 +749,20 @@ export async function redeemVoucher(rawCode: string): Promise<{
 }
 
 export function getLocalReviews(warungId?: string): Review[] {
-  const all = getFromStorage<Review[]>(REVIEWS_KEY, initialReviews);
+  const all = getFromStorage<Review[]>(REVIEWS_KEY, []);
   if (!warungId) return all;
   return all.filter((r) => String(r.warungId) === String(warungId));
 }
 
 export async function getReviews(warungId?: string): Promise<Review[]> {
-  if (isMockMode()) return getLocalReviews(warungId);
+  if (isMockMode()) {
+    const saved = getLocalReviews(warungId);
+    if (saved.length > 0) return saved;
+    const { initialReviews } = await import("./mock/reviews");
+    return warungId
+      ? initialReviews.filter((r) => String(r.warungId) === String(warungId))
+      : initialReviews;
+  }
   if (warungId) {
     const res = await apiFetch<{ data: any[] }>(`/warungs/${warungId}/reviews`, { skipAuthRedirect: true });
     return (res.data || []).map((r: any) => ({
@@ -684,6 +796,7 @@ export async function addReview(review: Review & { orderId?: string }): Promise<
     });
     return getReviews();
   }
+  const { initialReviews } = await import("./mock/reviews");
   const current = getFromStorage<Review[]>(REVIEWS_KEY, initialReviews);
   const updated = [review, ...current];
   setToStorage(REVIEWS_KEY, updated);
@@ -735,6 +848,28 @@ export const authApi = {
     }
     return res.data.user;
   },
+  async updatePassword(
+    currentPassword: string,
+    password: string,
+    passwordConfirmation: string
+  ) {
+    const res = await apiFetch<{
+      success: boolean;
+      message: string;
+      data: { token: string; expires_at: string };
+    }>("/auth/me/password", {
+      method: "PUT",
+      body: JSON.stringify({
+        current_password: currentPassword,
+        password,
+        password_confirmation: passwordConfirmation,
+      }),
+    });
+    if (res.data?.token) {
+      setToken(res.data.token);
+    }
+    return res;
+  },
   async logout() {
     try {
       if (!isMockMode() && isAuthenticated()) {
@@ -743,6 +878,13 @@ export const authApi = {
     } finally {
       clearAuthStorage();
     }
+  },
+};
+
+export const reviewsApi = {
+  async myReviews() {
+    const res = await apiFetch<{ data: any[] }>("/me/reviews");
+    return res.data || [];
   },
 };
 

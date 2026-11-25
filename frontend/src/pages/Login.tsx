@@ -15,11 +15,13 @@ import {
   loginDummy,
 } from "../lib/auth";
 import { authApi } from "../lib/api";
+import { useUser } from "../lib/user";
 import logoUrl from "../../logo_KantinGO.png";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshUser } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +56,7 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await authApi.login(trimmedEmail, password);
+      await refreshUser();
       if (res.user.role === "admin") {
         setAdminNotice(true);
         return;

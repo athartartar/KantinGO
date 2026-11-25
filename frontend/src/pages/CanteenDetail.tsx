@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Clock, MapPin, Star, UtensilsCrossed } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -5,44 +6,38 @@ import FloatingCartButton from "../components/FloatingCartButton";
 import MenuCard from "../components/MenuCard";
 import PageHeader from "../components/PageHeader";
 import PillTabs from "../components/PillTabs";
+import { getWarungById, getWarungMenus } from "../lib/api";
 import { useCart } from "../lib/cart";
-import { mockMenuList } from "../lib/mock/menu";
-import { mockWarungList } from "../lib/mock/warung";
-import { calculateWarungStats } from "../lib/mock/reviews";
 
 export default function CanteenDetail() {
   const { id, warungId } = useParams<{ id?: string; warungId?: string }>();
   const activeId = warungId || id;
   const { addItem } = useCart();
+  const navigate = useNavigate();
 
-  const warung = useMemo(() => {
-    return (
-      mockWarungList.find(
-        (w) =>
-          String(w.id) === String(activeId) ||
-          w.name?.toLowerCase().includes(String(activeId).toLowerCase()) ||
-          w.nama?.toLowerCase().includes(String(activeId).toLowerCase())
-      ) || mockWarungList[0]
-    );
-  }, [activeId]);
+  const { data: warung, isLoading: isWarungLoading } = useQuery({
+    queryKey: ["warung", activeId],
+    queryFn: () => getWarungById(activeId!),
+    enabled: Boolean(activeId),
+  });
+
+  const { data: warungMenus = [] } = useQuery({
+    queryKey: ["warung-menus", activeId],
+    queryFn: () => getWarungMenus(activeId!),
+    enabled: Boolean(activeId),
+  });
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
-  // Filter menu yang dimiliki oleh warung ini
-  const warungMenus = useMemo(() => {
-    if (!warung) return [];
-    return mockMenuList.filter((m) => String(m.warungId) === String(warung.id));
-  }, [warung]);
-
   // Ekstrak kategori unik untuk chip tabs
   const categories = useMemo(() => {
-    const rawCategories = Array.from(new Set(warungMenus.map((m) => m.kategori)));
+    const rawCategories = Array.from(new Set(warungMenus.map((m) => m.kategori || "Makanan")));
     return [
       { id: "all", label: "Semua", count: warungMenus.length },
       ...rawCategories.map((c) => ({
         id: c,
         label: c,
-        count: warungMenus.filter((m) => m.kategori === c).length,
+        count: warungMenus.filter((m) => (m.kategori || "Makanan") === c).length,
       })),
     ];
   }, [warungMenus]);
@@ -50,8 +45,21 @@ export default function CanteenDetail() {
   // Filter menu berdasarkan tab kategori yang aktif
   const displayedMenus = useMemo(() => {
     if (activeCategory === "all") return warungMenus;
-    return warungMenus.filter((m) => m.kategori === activeCategory);
+    return warungMenus.filter((m) => (m.kategori || "Makanan") === activeCategory);
   }, [warungMenus, activeCategory]);
+
+  if (isWarungLoading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto p-4 md:px-6 lg:px-8 py-8 space-y-6">
+        <div className="h-40 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-56 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!warung) {
     return (
@@ -62,16 +70,10 @@ export default function CanteenDetail() {
     );
   }
 
-  const navigate = useNavigate();
-
-  const stats = useMemo(() => {
-    return calculateWarungStats(String(warung.id));
-  }, [warung.id]);
-
   const warungNama = warung.nama || warung.name || "Warung Kantin";
   const warungLogo = warung.logo || warung.imageUrl || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80";
-  const warungRating = stats.ratingRataRata || warung.rating || 4.8;
-  const warungUlasan = stats.jumlahUlasan || warung.jumlahUlasan || 0;
+  const warungRating = warung.rating ?? 4.8;
+  const warungUlasan = warung.jumlahUlasan ?? warung.reviewCount ?? 0;
   const warungJamBuka = warung.jamBuka || "08:00 - 17:00";
   const warungLokasi = warung.location || "Kantin Kampus";
   const warungIsOpen = warung.isOpen ?? true;

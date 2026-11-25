@@ -52,6 +52,10 @@ export default function MenuCard({
         <img
           src={menuImage}
           alt={menuTitle}
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80";
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />

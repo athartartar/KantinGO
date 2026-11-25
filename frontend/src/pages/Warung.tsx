@@ -1,41 +1,30 @@
+import { useQuery } from "@tanstack/react-query";
 import { Store, UtensilsCrossed } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import FloatingCartButton from "../components/FloatingCartButton";
 import PageHeader from "../components/PageHeader";
 import WarungCard from "../components/WarungCard";
-import { CATEGORIES } from "../components/CategoryList";
-import { mockWarungList } from "../lib/mock/warung";
+import { getCategories, getWarungs } from "../lib/api";
 
 export default function Warung() {
   const [searchParams] = useSearchParams();
   const categorySlug = searchParams.get("kategori");
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+  });
+
   const categoryObj = categorySlug
-    ? CATEGORIES.find(
-        (c) => c.slug.toLowerCase() === categorySlug.toLowerCase()
-      )
+    ? categories.find((c) => c.slug.toLowerCase() === categorySlug.toLowerCase())
     : null;
 
   const categoryName = categoryObj ? categoryObj.name : categorySlug;
 
-  // Filter warung berdasarkan kategori jika query kategori tersedia
-  const filteredWarung = categorySlug
-    ? mockWarungList.filter(
-        (w) =>
-          (w.categories &&
-            w.categories.some(
-              (c) => c.toLowerCase() === categorySlug.toLowerCase()
-            )) ||
-          (w.kategori &&
-            w.kategori.some(
-              (c) => c.toLowerCase() === categorySlug.toLowerCase()
-            )) ||
-          w.nama?.toLowerCase().includes(categorySlug.toLowerCase()) ||
-          w.name?.toLowerCase().includes(categorySlug.toLowerCase()) ||
-          (w.categoryLabel &&
-            w.categoryLabel.toLowerCase().includes(categorySlug.toLowerCase()))
-      )
-    : mockWarungList;
+  const { data: filteredWarung = [], isLoading } = useQuery({
+    queryKey: ["warungs", categorySlug || "all"],
+    queryFn: () => getWarungs({ categorySlug: categorySlug || undefined }),
+  });
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6">
@@ -56,7 +45,13 @@ export default function Warung() {
       />
 
       {/* Grid Warung: Mobile 1 kolom, md 2 kolom, lg 3 kolom */}
-      {filteredWarung.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-64 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+          ))}
+        </div>
+      ) : filteredWarung.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {filteredWarung.map((warung) => (
             <WarungCard key={warung.id} warung={warung} />

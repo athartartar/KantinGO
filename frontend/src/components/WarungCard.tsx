@@ -30,6 +30,10 @@ export default function WarungCard({ warung, className = "" }: WarungCardProps) 
         <img
           src={warungImage}
           alt={warungNama}
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80";
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />

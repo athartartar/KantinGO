@@ -140,23 +140,63 @@ createRoot(document.getElementById("root")!).render(
                       <Route path="/canteens/:id" element={<CanteenDetail />} />
                     </Route>
 
-                    {/* Rute Standalone / Transaksional */}
+                    {/* Rute Standalone / Transaksional (dilindungi RequireAuth) */}
                     <Route
                       path="/warung/:warungId/menu/:menuId"
-                      element={<MenuDetail />}
+                      element={
+                        <RequireAuth>
+                          <MenuDetail />
+                        </RequireAuth>
+                      }
                     />
                     <Route
                       path="/warung/:warungId/profil"
-                      element={<WarungProfile />}
+                      element={
+                        <RequireAuth>
+                          <WarungProfile />
+                        </RequireAuth>
+                      }
                     />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/payment/qris" element={<PaymentQris />} />
+                    <Route
+                      path="/checkout"
+                      element={
+                        <RequireAuth>
+                          <Checkout />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/payment/qris"
+                      element={
+                        <RequireAuth>
+                          <PaymentQris />
+                        </RequireAuth>
+                      }
+                    />
                     <Route
                       path="/checkout/success"
-                      element={<CheckoutSuccess />}
+                      element={
+                        <RequireAuth>
+                          <CheckoutSuccess />
+                        </RequireAuth>
+                      }
                     />
-                    <Route path="/status/:orderId" element={<Receipt />} />
-                    <Route path="/review/:orderId" element={<Review />} />
+                    <Route
+                      path="/status/:orderId"
+                      element={
+                        <RequireAuth>
+                          <Receipt />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/review/:orderId"
+                      element={
+                        <RequireAuth>
+                          <Review />
+                        </RequireAuth>
+                      }
+                    />
 
                     {/* Fallback: belum login arahkan ke login, sudah login arahkan ke beranda */}
                     <Route

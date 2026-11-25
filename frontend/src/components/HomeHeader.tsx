@@ -1,7 +1,6 @@
 import { Bell, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { UserProfile } from "../lib/mock";
-import { mockUser } from "../lib/mock";
 import { useUser } from "../lib/user";
 import { useNotifications } from "../lib/notifications";
 import SearchBar from "./SearchBar";
@@ -18,11 +17,13 @@ export default function HomeHeader({
   onSearch,
 }: HomeHeaderProps) {
   const { user: userStore } = useUser();
-  const effectiveUser = user || {
-    ...mockUser,
-    name: userStore.nama,
-    points: userStore.poin,
+  const effectiveUser: UserProfile = user || {
+    id: userStore.id,
+    name: userStore.nama || "Pengguna",
+    points: userStore.poin ?? 0,
     email: userStore.email,
+    phone: userStore.noHp || "",
+    avatarUrl: userStore.avatar || "",
   };
 
   const { unreadCount: notifUnreadCount } = useNotifications();

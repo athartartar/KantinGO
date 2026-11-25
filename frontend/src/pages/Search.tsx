@@ -1,13 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
 import { Search as SearchIcon, SearchX, Store, Utensils, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import FloatingCartButton from "../components/FloatingCartButton";
 import MenuCard from "../components/MenuCard";
 import PageHeader from "../components/PageHeader";
 import WarungCard from "../components/WarungCard";
+import { searchAll } from "../lib/api";
 import { useCart } from "../lib/cart";
-import { mockMenuList } from "../lib/mock/menu";
-import { mockWarungList } from "../lib/mock/warung";
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -24,34 +24,17 @@ export default function Search() {
     }
   };
 
-  const cleanQuery = query.trim().toLowerCase();
-  const isSearching = cleanQuery.length > 0;
+  const cleanQuery = query.trim();
+  const isSearching = cleanQuery.length >= 2;
 
-  // Filter Menu realtime
-  const matchingMenus = useMemo(() => {
-    if (!isSearching) return [];
-    return mockMenuList.filter(
-      (m) =>
-        m.nama.toLowerCase().includes(cleanQuery) ||
-        (m.canteenName && m.canteenName.toLowerCase().includes(cleanQuery)) ||
-        m.deskripsi.toLowerCase().includes(cleanQuery) ||
-        m.kategori.toLowerCase().includes(cleanQuery)
-    );
-  }, [cleanQuery, isSearching]);
+  const { data: searchResult = { menus: [], warungs: [] }, isLoading } = useQuery({
+    queryKey: ["search", cleanQuery],
+    queryFn: () => searchAll(cleanQuery),
+    enabled: isSearching,
+  });
 
-  // Filter Warung realtime
-  const matchingWarungs = useMemo(() => {
-    if (!isSearching) return [];
-    return mockWarungList.filter(
-      (w) =>
-        w.nama?.toLowerCase().includes(cleanQuery) ||
-        w.name?.toLowerCase().includes(cleanQuery) ||
-        (w.location && w.location.toLowerCase().includes(cleanQuery)) ||
-        (w.kategori && w.kategori.some((k) => k.toLowerCase().includes(cleanQuery))) ||
-        (w.categories && w.categories.some((k) => k.toLowerCase().includes(cleanQuery)))
-    );
-  }, [cleanQuery, isSearching]);
-
+  const matchingMenus = searchResult.menus;
+  const matchingWarungs = searchResult.warungs;
   const hasResults = matchingMenus.length > 0 || matchingWarungs.length > 0;
 
   return (
@@ -85,7 +68,13 @@ export default function Search() {
 
       {/* Konten Hasil Pencarian */}
       {isSearching ? (
-        hasResults ? (
+        isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-36 rounded-3xl bg-white border border-blue-100 animate-pulse" />
+            ))}
+          </div>
+        ) : hasResults ? (
           <div className="space-y-8 animate-fadeIn">
             {/* 1. Section Menu */}
             {matchingMenus.length > 0 && (
@@ -104,7 +93,7 @@ export default function Search() {
                       menu={menu}
                       to={`/warung/${menu.warungId}/menu/${menu.id}`}
                       onAdd={(m) => {
-                        const warung = mockWarungList.find((w) => String(w.id) === String(m.warungId));
+                        const warung = matchingWarungs.find((w) => String(w.id) === String(m.warungId));
                         addItem(
                           {
                             menuId: m.id,
@@ -114,7 +103,7 @@ export default function Search() {
                             hargaSatuan: m.harga,
                             menu: m,
                           },
-                          warung?.nama || warung?.name
+                          warung?.nama || warung?.name || m.canteenName
                         );
                       }}
                     />

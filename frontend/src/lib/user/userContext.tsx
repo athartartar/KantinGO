@@ -7,20 +7,19 @@ import React, {
 } from "react";
 import type { Settings, User } from "./types";
 import { authApi, getUser as fetchUserApi, updateUser as updateUserApi } from "../api";
-import { isAuthenticated, isMockMode } from "../auth";
+import { getAuthUser, isAuthenticated, isMockMode } from "../auth";
 
 const USER_STORAGE_KEY = "kantingo_user_v1";
 const SETTINGS_STORAGE_KEY = "kantingo_settings_v1";
 
-const initialUser: User = {
-  id: "usr-01",
-  nama: "Radhitya Fadhil",
-  username: "radhityafadhil",
-  email: "radhitya.fadhil@kampus.ac.id",
-  noHp: "081234567890",
-  avatar:
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
-  poin: 1250,
+const emptyUser: User = {
+  id: "",
+  nama: "",
+  username: "",
+  email: "",
+  noHp: "",
+  avatar: "",
+  poin: 0,
 };
 
 const initialSettings: Settings = {
@@ -33,25 +32,43 @@ interface UserContextValue {
   user: User;
   settings: Settings;
   getUser: () => User;
-  updateUser: (data: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<User>;
   updateSettings: (data: Partial<Settings>) => void;
   logout: () => void;
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 
+function getInitialUser(): User {
+  if (!isAuthenticated()) {
+    return emptyUser;
+  }
+  try {
+    const saved = localStorage.getItem(USER_STORAGE_KEY);
+    if (saved) {
+      return { ...emptyUser, ...JSON.parse(saved) };
+    }
+  } catch {}
+  const authUser = getAuthUser();
+  if (authUser) {
+    return {
+      id: String(authUser.id),
+      nama: authUser.name,
+      username: authUser.email.split("@")[0] || "",
+      email: authUser.email,
+      noHp: authUser.phone || "",
+      avatar: authUser.avatar_path || "",
+      poin: Number(authUser.points ?? 0),
+    };
+  }
+  return emptyUser;
+}
+
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User>(() => {
-    try {
-      const saved = localStorage.getItem(USER_STORAGE_KEY);
-      if (saved) {
-        return { ...initialUser, ...JSON.parse(saved) };
-      }
-    } catch {}
-    return initialUser;
-  });
+  const [user, setUser] = useState<User>(() => getInitialUser());
 
   const [settings, setSettings] = useState<Settings>(() => {
     try {
@@ -63,17 +80,30 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     return initialSettings;
   });
 
-  useEffect(() => {
+  const refreshUser = useCallback(async () => {
     if (!isMockMode() && isAuthenticated()) {
-      fetchUserApi()
-        .then((remoteUser) => setUser(remoteUser))
-        .catch(() => {});
+      try {
+        const remoteUser = await fetchUserApi();
+        setUser(remoteUser);
+      } catch {
+        setUser(emptyUser);
+      }
+    } else if (!isAuthenticated()) {
+      setUser(emptyUser);
     }
   }, []);
 
   useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
     try {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      if (isAuthenticated() && user.id) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(USER_STORAGE_KEY);
+      }
     } catch {}
   }, [user]);
 
@@ -87,14 +117,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     return user;
   }, [user]);
 
-  const updateUser = useCallback((data: Partial<User>) => {
-    setUser((prev) => ({ ...prev, ...data }));
-    if (!isMockMode() && isAuthenticated()) {
-      updateUserApi(data)
-        .then((updated) => setUser(updated))
-        .catch(() => {});
-    }
-  }, []);
+  const updateUser = useCallback(
+    async (data: Partial<User>): Promise<User> => {
+      if (!isMockMode() && isAuthenticated()) {
+        const updated = await updateUserApi(data);
+        setUser(updated);
+        return updated;
+      }
+      const next = { ...user, ...data };
+      setUser(next);
+      return next;
+    },
+    [user]
+  );
 
   const updateSettings = useCallback((data: Partial<Settings>) => {
     setSettings((prev) => ({ ...prev, ...data }));
@@ -106,7 +141,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.removeItem(USER_STORAGE_KEY);
       localStorage.removeItem(SETTINGS_STORAGE_KEY);
     } catch {}
-    setUser(initialUser);
+    setUser(emptyUser);
     setSettings(initialSettings);
   }, []);
 
@@ -116,6 +151,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
         user,
         settings,
         getUser,
+        refreshUser,
         updateUser,
         updateSettings,
         logout,

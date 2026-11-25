@@ -1,15 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { mockWarung } from "../lib/mock";
+import { getWarungs } from "../lib/api";
 import WarungCard from "./WarungCard";
 
 export default function WarungList() {
-  // Ambil hingga 3 warung untuk kebutuhan tampilan Homepage
-  const displayWarungs = mockWarung.slice(0, 3);
+  const { data: warungs = [], isLoading } = useQuery({
+    queryKey: ["warungs"],
+    queryFn: () => getWarungs(),
+  });
+
+  const displayWarungs = warungs.slice(0, 3);
 
   return (
     <section className="space-y-3.5">
-      {/* Header: Judul "Warung Kantin" di kiri & tombol "Selengkapnya" di kanan */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg md:text-xl font-bold tracking-tight text-navy">
@@ -29,16 +33,26 @@ export default function WarungList() {
         </Link>
       </div>
 
-      {/* Grid Warung: Mobile 1 kartu/baris (tampilkan 2), Desktop grid (tampilkan 3) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {displayWarungs.map((warung, index) => (
-          <WarungCard
-            key={warung.id}
-            warung={warung}
-            className={index === 2 ? "hidden md:flex" : "flex"}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-32 rounded-3xl bg-white border border-blue-100 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {displayWarungs.map((warung, index) => (
+            <WarungCard
+              key={warung.id}
+              warung={warung}
+              className={index === 2 ? "hidden md:flex" : "flex"}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -6,7 +6,6 @@ import { getMenus, getWarungs } from "../lib/api";
 import { useCart } from "../lib/cart";
 import { formatRupiah } from "../lib/format";
 import type { Menu } from "../lib/mock/types";
-import { mockPopularMenus } from "../lib/mock";
 
 interface PopularMenuListProps {
   onAddToCart?: (menu: any, e?: React.MouseEvent) => void;
@@ -27,17 +26,16 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
   }, []);
 
   const {
-    data: menus = mockPopularMenus as any[],
+    data: menus = [],
     isLoading,
     isError,
     refetch,
   } = useQuery({
     queryKey: ["menus"],
     queryFn: async () => {
-      try {
-        const raw = await getMenus();
-        if (!raw || raw.length === 0) return mockPopularMenus;
-        const warungs = await getWarungs();
+      const raw = await getMenus();
+      if (!raw || raw.length === 0) return [];
+      const warungs = await getWarungs();
         const canteenMap = new Map(
           warungs.map((w) => [String(w.id), w.name || w.nama || "Kantin Bu Siti"])
         );
@@ -76,11 +74,7 @@ export default function PopularMenuList({ onAddToCart }: PopularMenuListProps) {
             addOnGroups: item.addOnGroups || [],
           };
         });
-      } catch {
-        return mockPopularMenus;
-      }
     },
-    initialData: mockPopularMenus as any[],
   });
 
   const handleCardClick = (menu: any) => {

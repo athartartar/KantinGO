@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PopularMenuList from "../components/PopularMenuList";
 import { useVoucher } from "../context/VoucherContext";
-import { mockUser } from "../lib/mock";
+import { useUser } from "../lib/user";
 
 interface FormStatus {
   type: "success" | "error";
@@ -18,12 +18,13 @@ interface FormStatus {
 
 export default function Voucher() {
   const { voucherCount, redeemVoucher } = useVoucher();
+  const { user } = useUser();
   const [code, setCode] = useState("");
   const [status, setStatus] = useState<FormStatus | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sumber data poin user (sama dengan pill poin di Homepage)
-  const currentPoints = mockUser.points;
+  // Sumber data poin user dari API/UserContext
+  const currentPoints = user.poin ?? 0;
   const targetPoints = 1500;
   const pointsRemaining = Math.max(0, targetPoints - currentPoints);
   const progressPercent = Math.min(

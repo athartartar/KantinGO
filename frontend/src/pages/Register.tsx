@@ -17,6 +17,7 @@ import {
   loginDummy,
 } from "../lib/auth";
 import { authApi, canteensApi } from "../lib/api";
+import { useUser } from "../lib/user";
 import logoUrl from "../../logo_KantinGO.png";
 
 function getPasswordChecks(password: string) {
@@ -30,6 +31,7 @@ function getPasswordChecks(password: string) {
 
 export default function Register() {
   const navigate = useNavigate();
+  const { refreshUser } = useUser();
   const [role, setRole] = useState<"customer" | "partner">("customer");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -155,6 +157,7 @@ export default function Register() {
         canteen_id: role === "partner" && canteenId ? Number(canteenId) : undefined,
       });
 
+      await refreshUser();
       navigate(getDefaultHomeForUser(res.user), { replace: true });
     } catch (err: unknown) {
       if (err instanceof ApiError) {

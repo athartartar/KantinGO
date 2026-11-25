@@ -11,7 +11,6 @@ import type {
   OrderItem,
   OrderStatus,
 } from "../mock/types";
-import { addStoredReview } from "../mock/reviews";
 import { addNotificationToStorage } from "../notifications";
 
 import {
@@ -284,7 +283,7 @@ function getInitialOrders(): Order[] {
   } catch {
     // Abaikan jika parsing gagal
   }
-  return initialSeedOrders;
+  return isMockMode() ? initialSeedOrders : [];
 }
 
 export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -418,14 +417,16 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
           tanggal: "Hari ini",
           orderId,
         }).catch(() => {});
-      } else if (order) {
-        addStoredReview({
-          id: `rev-${Date.now()}`,
-          warungId: order.warungId,
-          namaUser: "Radhitya Fadhil",
-          rating,
-          komentar,
-          tanggal: "Hari ini",
+      } else if (order && isMockMode()) {
+        import("../mock/reviews").then(({ addStoredReview }) => {
+          addStoredReview({
+            id: `rev-${Date.now()}`,
+            warungId: order.warungId,
+            namaUser: "Pengguna",
+            rating,
+            komentar,
+            tanggal: "Hari ini",
+          });
         });
       }
     },

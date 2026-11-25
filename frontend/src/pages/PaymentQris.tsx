@@ -41,10 +41,10 @@ export default function PaymentQris() {
   const [paymentCode, setPaymentCode] = useState<string>("");
   const [totalAmount, setTotalAmount] = useState<number>(orderState?.total || 0);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(900);
-  const [paymentStatus, setPaymentStatus] = useState<"loading" | "pending" | "paid" | "expired">(
-    isMockMode() ? "pending" : "loading"
-  );
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<
+    "loading" | "error" | "pending" | "paid" | "expired"
+  >(isMockMode() ? "pending" : "loading");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
@@ -96,10 +96,23 @@ export default function PaymentQris() {
       setPaymentCode(payment.code);
       setTotalAmount(payment.amount);
       setExpiresAt(payment.expires_at);
-      setPaymentStatus(payment.status === "paid" ? "paid" : payment.status === "expired" ? "expired" : "pending");
+      if (payment.expires_at) {
+        setTimeLeft(
+          Math.max(0, Math.floor((new Date(payment.expires_at).getTime() - Date.now()) / 1000))
+        );
+      }
+      setPaymentStatus(
+        payment.status === "paid"
+          ? "paid"
+          : payment.status === "expired"
+          ? "expired"
+          : "pending"
+      );
     } catch (err: any) {
-      setErrorMsg(err?.message || "Gagal membuat pembayaran QRIS.");
-      setPaymentStatus("expired");
+      setErrorMsg(
+        err?.message || "Gagal terhubung ke server pembayaran. Periksa koneksi Anda lalu coba lagi."
+      );
+      setPaymentStatus("error");
     }
   }, [orderState, backendOrderId, backendOrderCode, warungNama]);
 
@@ -150,10 +163,16 @@ export default function PaymentQris() {
     return () => clearInterval(poller);
   }, [backendOrderId, backendOrderCode, paymentStatus, navigate, orderState, clearCart]);
 
-  const isExpired = paymentStatus === "expired" || (expiresAt !== null && timeLeft <= 0);
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const formattedCountdown = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  const isExpired =
+    paymentStatus === "expired" ||
+    (paymentStatus === "pending" && expiresAt !== null && timeLeft !== null && timeLeft <= 0);
+  const displaySeconds = timeLeft ?? 0;
+  const minutes = Math.floor(displaySeconds / 60);
+  const seconds = displaySeconds % 60;
+  const formattedCountdown =
+    timeLeft !== null
+      ? `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+      : "--:--";
 
   const handleResetQR = async () => {
     if (isMockMode()) {
@@ -165,6 +184,7 @@ export default function PaymentQris() {
       await initPayment();
       return;
     }
+    setErrorMsg("");
     setPaymentStatus("loading");
     try {
       const payment = await paymentsApi.createPayment(backendOrderId);
@@ -172,10 +192,15 @@ export default function PaymentQris() {
       setPaymentCode(payment.code);
       setTotalAmount(payment.amount);
       setExpiresAt(payment.expires_at);
+      if (payment.expires_at) {
+        setTimeLeft(
+          Math.max(0, Math.floor((new Date(payment.expires_at).getTime() - Date.now()) / 1000))
+        );
+      }
       setPaymentStatus("pending");
     } catch (err: any) {
-      setErrorMsg(err?.message || "Gagal membuat QR baru.");
-      setPaymentStatus("expired");
+      setErrorMsg(err?.message || "Gagal membuat QR baru. Silakan coba lagi.");
+      setPaymentStatus("error");
     }
   };
 
@@ -256,7 +281,30 @@ export default function PaymentQris() {
 
               <div className="relative w-full aspect-square bg-slate-50 rounded-2xl p-4 flex items-center justify-center border border-slate-100">
                 {paymentStatus === "loading" ? (
-                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                  <div className="flex flex-col items-center justify-center gap-2 text-center">
+                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                    <p className="text-xs font-semibold text-navy/60">Membuat kode QRIS...</p>
+                  </div>
+                ) : paymentStatus === "error" ? (
+                  <div className="flex flex-col items-center justify-center p-4 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-navy">Gagal Memuat QRIS</p>
+                      <p className="text-[11px] text-navy/65 mt-0.5">
+                        {errorMsg || "Terjadi gangguan jaringan atau server."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={initPayment}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-full shadow-sm hover:bg-primary-dark active:scale-95 transition-all cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Coba lagi</span>
+                    </button>
+                  </div>
                 ) : isExpired ? (
                   <div className="absolute inset-0 bg-navy/90 backdrop-blur-xs rounded-2xl flex flex-col items-center justify-center p-4 text-white text-center space-y-3 animate-fadeIn">
                     <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center">
@@ -297,7 +345,7 @@ export default function PaymentQris() {
               </div>
             </div>
 
-            {qrPayload && !isExpired && (
+            {qrPayload && paymentStatus === "pending" && !isExpired && (
               <a
                 href={qrPayload}
                 target="_blank"
@@ -313,9 +361,33 @@ export default function PaymentQris() {
           <div className="lg:col-span-7 space-y-5">
             <div className="bg-surface rounded-2xl p-5 border border-blue-100 space-y-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="inline-flex items-center gap-2 bg-amber-100/80 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full border border-amber-200">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span>Menunggu pembayaran</span>
+                <div
+                  className={`inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full border ${
+                    paymentStatus === "error"
+                      ? "bg-rose-100/80 text-rose-800 border-rose-200"
+                      : paymentStatus === "loading"
+                      ? "bg-blue-50 text-primary border-blue-200"
+                      : "bg-amber-100/80 text-amber-800 border-amber-200"
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      paymentStatus === "error"
+                        ? "bg-rose-500"
+                        : paymentStatus === "loading"
+                        ? "bg-primary animate-pulse"
+                        : "bg-amber-500 animate-pulse"
+                    }`}
+                  />
+                  <span>
+                    {paymentStatus === "error"
+                      ? "Gagal memuat tagihan"
+                      : paymentStatus === "loading"
+                      ? "Menyiapkan pembayaran"
+                      : isExpired
+                      ? "Kedaluwarsa"
+                      : "Menunggu pembayaran"}
+                  </span>
                 </div>
 
                 <div
